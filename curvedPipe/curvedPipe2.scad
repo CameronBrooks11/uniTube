@@ -111,9 +111,10 @@ module pipeCurve(points, point, radii, od, id, isLastSegment = false)
  */
 module curvedPipe(points, segments, radii, od, id)
 {
+    echo("length of points: ", len(points));
     union()
     {
-        for (point = [0:segments - 2])
+        for (point = [0:len(points) - 3])
             pipeCurve(points, point, radii, od, id);
     }
 }
@@ -122,16 +123,15 @@ module curvedPipe(points, segments, radii, od, id)
 if (true)
 {
     curvedPipe(
-        [
-            [ 0, 0, 0 ], [ 100, 0, 0 ], [ 100, 100, 0 ], [ 50, 100, 100 ], [ 50, 100, 150 ], [ 0, 100, 50 ],
-            [ 0, 0, 0 ], [ 50, 0, 50 ]
-        ],
-        7, [ 70, 30, 30, 6, 50, 30 ], 10, 8);
+        points=
+        [  [ 0, 0, 0 ], [ 100, 0, 0 ], [ 100, 100, 0 ], [ 50, 100, 100 ], [ 50, 100, 150 ], [ 0, 100, 50 ],
+            [ 0, 0, 0 ], [ 50, 0, 50 ]],
+        segments=7, radii=[ 70, 30, 30, 6, 50, 30 ], od=10, id=8);
 
-    rotate([ 0, 0, 180 ]) curvedPipe(
+    rotate([ 0, 0, 180 ]) curvedPipe(points=
         [
             [ 0, 0, 0 ], [ 100, 0, 0 ], [ 100, 100, 0 ], [ 100, 100, 100 ], [ 0, 100, 100 ], [ 0, 100, 0 ], [ 0, 0, 0 ],
             [ 50, 0, 50 ]
         ],
-        7, [ 70, 30, 30, 6, 50, 30 ], 10, 8);
+        segments=7, radii=[ 70, 30, 30, 6, 50, 30 ], od=10, id=8);
 }

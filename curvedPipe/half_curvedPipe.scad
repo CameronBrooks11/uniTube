@@ -1,6 +1,6 @@
-use <maths.scad>      // Author: William A Adams, Public Domain
-use <moreShapes.scad> // Author: Damian Axford, with elements by nophead, Public Domain
-use <vector.scad>     // Author: Juan Gonzalez-Gomez, GPL
+use <libs/maths.scad>      // Author: William A Adams, Public Domain
+use <libs/someShapes.scad> // Author: Damian Axford, with elements by nophead, Public Domain
+use <libs/vector.scad>     // Author: Juan Gonzalez-Gomez, GPL
 
 $fn = 64;
 
