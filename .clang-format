@@ -10,3 +10,9 @@ IndentWidth: 4
 AllowShortFunctionsOnASingleLine: None
 AllowShortBlocksOnASingleLine: Never
 AllowShortIfStatementsOnASingleLine: false
+# OpenSCAD has NO adjacent-string-literal concatenation. clang-format's default
+# of splitting a long string across lines produces `"a" "b"`, which is a C idiom
+# and a SYNTAX ERROR here -- it silently corrupted an assert message during
+# Phase 1 before this was set. Never turn this back on.
+BreakStringLiterals: false
+AlwaysBreakBeforeMultilineStrings: false

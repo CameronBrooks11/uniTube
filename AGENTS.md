@@ -49,6 +49,35 @@ here. See `PLAN.md` §10.
    on OpenSCAD 2021.01, and near-collinear waypoints are the most common input
    there is. Use `atan2(norm(cross(a,b)), a*b)`.
 
+## OpenSCAD 2021.01 gotchas, all verified in this repo
+
+These cost real time in Phase 1. Each is a silent or misleading failure.
+
+- **`use` does NOT transitively re-export.** A consumer doing `use <A>` where A
+  does `use <B>` cannot see B's functions. `include` merges into the file scope
+  and IS re-exported. That is why `src/uniTube.scad` uses `include` and every
+  other file uses `use`. Relative paths resolve against the file containing the
+  directive, so `frontend/`'s `../` imports survive being included from `src/`.
+- **`use` does not export top-level VARIABLES either.** Every shared constant in
+  this library is a zero-argument function (`ut_eps()`, `ut_up()`).
+- **`assert` messages are evaluated EAGERLY**, even when the condition passes.
+  `assert(is_num(r) || ..., str("...", len(r)))` warns on a scalar `r` because
+  the message runs regardless. Keep messages free of calls that can fail.
+- **clang-format destroys import lines** — `use <a/b.scad>` becomes
+  `use<a / b.scad>` and the resulting error names the wrong file. Always wrap the
+  import block in `// clang-format off` / `on`, and terminate each with `;`
+  (without the semicolon clang-format also mis-indents the whole file after it).
+  `just lint` rule 3 enforces the well-formed shape.
+- **clang-format splits long string literals**, producing `"a" "b"`, which is a C
+  idiom and a SYNTAX ERROR in OpenSCAD. `BreakStringLiterals: false` is set in
+  `.clang-format` for exactly this reason. Never turn it back on.
+- **`is_nan()` does not exist.** Use `is_num(x)` (false for nan, TRUE for inf) or
+  `x == x` (false for nan only). The two distinguish the failure modes this
+  library cares about: `acos` past 1.0 gives nan, `tan(90)` gives inf.
+- **`cross()` requires 3-vectors.** For a planar angle use `atan2(y, x)`.
+- **Swept quads are non-planar.** Emit triangles, or OpenSCAD prints "PolySet has
+  nonplanar faces. Attempting alternate construction" and guesses the topology.
+
 ## Toolchain
 
 - OpenSCAD **2021.01** is the version floor. No features newer than that.

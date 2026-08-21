@@ -1,18 +1,24 @@
 // uniTube — The Universal Tube Library for OpenSCAD
 //
-// This is the only public entry point. Consumers write:
-//     use <uniTube/src/uniTube.scad>
+// The only public entry point:
+//     use <uniTube/src/uniTube.scad>;
 //
-// It re-exports the library by `use <>`ing each module below. Nothing in src/
-// emits geometry or echoes on import — demos live in examples/ (see AGENTS.md).
-//
-// PHASE 0: this file is a stub. The modules below land in Phase 1; see PLAN.md.
-//
-//   use <ut_core.scad>      // eps, record tags, assoc-list access, assert helpers
-//   use <ut_math.scad>      // unit, turn (atan2, never acos), Rodrigues rotv, fragments
-//   use <ut_path.scad>      // the spine (L/A/P) + ut_stations() — the one compiler function
-//   use <ut_profile.scad>   // utprof, ut_round, solid/shell/bore regions, PROF-1..3
-//   use <ut_mesh.scad>      // the backend: region x stations -> one polyhedron
-//   use <ut_net.scad>       // runs, joints, lumen groups, the two-pass, ut_check
-//   use <ut_port.scad>      // port records + ut_at_port. Zero dependencies.
-//   use <frontend/ut_polyline.scad>
+// NOTE ON `include` vs `use`, verified on OpenSCAD 2021.01:
+//   * `use` does NOT transitively re-export. A consumer doing `use <A>` where A
+//     does `use <B>` CANNOT see B's functions.
+//   * `include` merges a file into this one's scope, and `use` then exports what
+//     it finds there. So the entry point must `include`, not `use`.
+//   * Relative paths resolve against the file containing the directive, so
+//     frontend/'s `../` imports still work when included from here.
+// Internal modules use `use <>` for their own dependencies; only this file
+// includes. Nothing in src/ emits geometry or echoes on import (AGENTS.md rule 3).
+
+// clang-format off
+include <ut_core.scad>;
+include <ut_math.scad>;
+include <ut_path.scad>;
+include <ut_profile.scad>;
+include <ut_mesh.scad>;
+include <ut_port.scad>;
+include <frontend/ut_polyline.scad>;
+// clang-format on
