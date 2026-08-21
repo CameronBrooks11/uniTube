@@ -1,0 +1,60 @@
+uniTube — attribution and provenance
+====================================
+
+uniTube itself (everything under src/, examples/, tests/) is BSD-2-Clause,
+Copyright (c) 2026 Cameron Brooks. It has NO third-party dependencies and links
+to nothing.
+
+Everything under reference/ is READ-ONLY QUARANTINE. It is retained as prior
+art, as a requirements checklist, and as the historical record of what this
+project grew out of. No file under src/ may import from reference/ — this is
+enforced by `just lint` and stated in AGENTS.md.
+
+
+reference/axford/            CC-BY (version unspecified)
+    Curved Pipe Library for OpenSCAD, Thingiverse user axford (thing:71464),
+    together with the libs/ it depends on. See reference/axford/LICENSE.txt.
+    NOTE: libs/someShapes.scad's own header claims "Public Domain" (Damian
+    Axford) while also stating it borrowed from nophead / Mendel90 utils.scad,
+    which is upstream GPLv3. That contradiction is unresolvable from the files,
+    which is one reason nothing here is carried into src/ as text.
+    libs/maths.scad is explicitly public domain (William A Adams).
+    libs/vector.scad is GPL (Juan Gonzalez-Gomez) — see the warning below.
+    half_curvedPipe.scad additionally contains original work by Cameron Brooks
+    (the seam-transport machinery); the requirement it discovered is carried
+    forward, its implementation is not.
+
+reference/gringer/           GPLv3
+    path_extrude.scad, Copyright (C) 2014-2019 David Eccles (gringer).
+
+reference/doommeister/       GPLv3
+    Round Duct/Pipework fittings Library, by "the DoomMeister".
+
+reference/makrokaba/         BSD-3-Clause
+    Universal fitting adapter generator, Makrokaba, with modifications by
+    Cameron Brooks. Full licence text is in each file header. This is the
+    requirements checklist for a future, separate terminations library.
+
+reference/jantecnl/          NO LICENCE STATED
+    curvedPipe-4-into-1.scad, derived from a personal blog post
+    (jantecnl.synology.me) that carries no licence statement of any kind.
+    Retained ONLY because it is the historical record of the 4-into-1 manifold
+    that drives this project's acceptance test. Its GEOMETRY (the run
+    coordinates) is used as a test fixture; none of its code is carried forward.
+    If its provenance is ever contested, deleting this directory costs nothing.
+
+reference/proto/             owner-written experiments, no external code.
+
+
+⚠ COPYLEFT WARNING FOR CONTRIBUTORS
+    reference/gringer/path_extrude.scad (GPLv3) is a working polyhedron-based
+    sweep engine, and is therefore the single most tempting file to copy from
+    while writing src/ut_mesh.scad. DO NOT. `just lint` blocks `use <>` from
+    reference/, but it cannot detect copy-paste. Read for understanding; write
+    from the geometry. The same applies to reference/doommeister/.
+
+    reference/axford/libs/vector.scad is GPL and was `use <>`d by every core
+    file in the pre-2026 layout. OpenSCAD's `use <>` is source-level inclusion
+    at parse time. Nothing in src/ may reference it. Its six consumed functions
+    (mod, cross, dot, unitv, anglev, orientate) are OpenSCAD builtins or
+    one-liners today; src/ut_math.scad reimplements them from the definitions.

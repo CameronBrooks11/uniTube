@@ -1,10 +1,15 @@
-# uniTube
+# Frames
 
-The Universal Tube Library for OpenSCAD.
+> **Historical note.** This page was `curvedPipe/README.md` and is kept for its
+> derivation, which is correct and worth having. **The module it documents is
+> superseded.** `pipeOrientate` built the frame by a quaternion round-trip;
+> uniTube builds it directly from `(n, cross(t,n), t)` — see `docs/salvage.md` §5
+> and ADR 0002. The transport/fixed frame-policy spec lands here in Phase 2.
 
-# Curved Pipe
+## Origin
 
-Inspired by: Curved Pipe Library for OpenSCAD by axford on Thingiverse: https://www.thingiverse.com/thing:71464
+Inspired by the Curved Pipe Library for OpenSCAD by axford on Thingiverse
+(thing:71464) — see `reference/axford/` and the root `NOTICE`.
 
 ## Pipe Orientation Module
 

@@ -1,0 +1,12 @@
+# Formatting for uniTube's OpenSCAD sources.
+# clang-format has no OpenSCAD parser; it treats .scad as C-like, which is close
+# enough for braces, indentation and argument wrapping. This config reproduces the
+# formatting the repo was already using -- verified byte-identical against
+# reference/gringer/path_extrude.scad before being committed.
+BasedOnStyle: LLVM
+BreakBeforeBraces: Allman
+ColumnLimit: 120
+IndentWidth: 4
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: false
