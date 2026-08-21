@@ -23,4 +23,6 @@ include <ut_mesh.scad>;
 include <ut_port.scad>;
 include <ut_net.scad>;
 include <frontend/ut_polyline.scad>;
+include <frontend/ut_turtle.scad>;
+include <frontend/ut_curve.scad>;
 // clang-format on

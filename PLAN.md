@@ -1,7 +1,8 @@
 # uniTube — Development Plan
 
-**Status:** revision 2 — decisions settled. **Phases 0-2 merged; Phase 3 complete
-and in review** (see §11 for outcomes and deviations).
+**Status:** revision 2 — decisions settled. **Phases 0-3 merged; Phase 4 complete
+and in review.** The v1 core is done: path, profile, and network.
+See §11 for outcomes and deviations.
 **Date:** 2026-08-21 · **Last commit:** `5d2975b`, 2025-01-10 (19 months cold)
 
 Produced by a 12-agent review (survey → four competing architectures → one
@@ -581,7 +582,7 @@ ut_tube(ut_polyline(pts, r=20),
 
 **Running totals:** 9 test files, **9 guards**, 6 examples, 8 `src/` modules.
 
-### Phase 3 — complete, in review
+### Phase 3 — merged (`ad3022f`)
 
 The 4-into-1 manifold renders. **This geometry has never rendered in any commit
 of this repository.**
@@ -622,3 +623,64 @@ default for OpenSCAD models.
 
 **Running totals:** 10 test files, **13 guards**, 9 examples, 10 `src/` modules,
 3 partspec contracts.
+
+### Phase 4 — complete, in review · **THE FALSIFICATION TEST PASSED**
+
+The rule was stated in advance, in §7 and in ADR 0002: if the turtle did not fall
+out of the spine cleanly — if the spine had to grow a case, or the turtle
+reimplemented any frame or tessellation logic — **the two-level IR was to be
+deleted, not defended.**
+
+Recorded as facts rather than recollection:
+
+| test | result |
+|---|---|
+| Did any core module change? | **No.** All five checksummed before `ut_turtle.scad` was written, verified byte-identical after both frontends were done. |
+| Do the frontends reimplement frame or tessellation logic? | **No.** Zero references to `ut_fragments`, `ut_ref_fallback`, `ut_ortho`, `_ut_transport`, `ut_st_mat`, `ut_stations`. |
+| Size | `ut_turtle.scad` 65 lines, `ut_curve.scad` 53 |
+| Turtle route with a mid-run roll and bends in different planes | renders `Simple: yes`; end point matches hand calculation to 12 digits |
+| Helix renders with correct twist | `Simple: yes` |
+
+**The spine stays.** The strongest evidence is `roll`: it emits no geometry, it
+changes the plane of every subsequent bend and therefore the shape of the path,
+and then it is gone. `SPINE-5` — the IR carries no roll — survived contact with
+the one frontend most likely to break it.
+
+**Two bugs found by building it:**
+
+1. **`ut_curve` mapped sample index to parameter after deduping**, so a single
+   dropped sample silently shifted every `dfdt` evaluation. Dedupe now returns
+   indices and the surviving samples keep their own parameter values.
+2. **My own `dfdt` in the first helix test was wrong** — OpenSCAD trig is in
+   DEGREES, so `d/dt cos(360*k*t) = -2*PI*k*sin(...)`, and dropping the `2*PI`
+   left every tangent ~6° out while looking entirely plausible. Documented as a
+   foot-gun in `docs/frontends.md`, because the library cannot detect it.
+
+**A quantified fact worth having:** central differences are second-order accurate
+in the interior (measured 0.006° against analytic at n=160) but **first-order at
+the ends** (2.24° against a predicted 2.25°). The ends are exactly where port
+frames come from, so supply `dfdt` when you know it.
+
+**Running totals:** 12 test files, **17 guards**, 11 examples, 12 `src/` modules,
+3 partspec contracts.
+
+---
+
+## 12. Where this leaves the project
+
+The v1 core is complete: **path, profile, and network.** A tube is described by
+any of four frontends, compiled to one canonical spine, swept as a single
+polyhedron, and assembled into branching hollow networks whose bores stay open.
+
+What ships: four frontends, an arc-native two-level IR with 13 invariants, a
+dependency-free mesh backend, split C-sections, arbitrary hollow profiles,
+declared joints with lumen groups, ports as pure data, and a four-tier gate whose
+every check has been validated by deliberately reintroducing the bug it catches.
+
+What does not, deliberately, with the reasoning recorded in §10 and the ADRs:
+terminations, junction fillets, profile variation, biarc fitting, multi-lumen
+sections.
+
+The bug that started this — a parameter rename in `5d2975b` that made every bend
+render as nothing for 19 months — would now be caught at commit time by `just
+check`, in about eight lines of shell.

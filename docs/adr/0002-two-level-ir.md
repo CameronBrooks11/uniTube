@@ -1,6 +1,6 @@
 # ADR 0002 — The path IR has two levels
 
-**Status:** accepted (2026-08-21), with a falsification test scheduled in Phase 4
+**Status:** accepted (2026-08-21) · **falsification test PASSED in Phase 4 — see below**
 
 ## Context
 
@@ -50,3 +50,38 @@ Roughly 80 extra lines, and the layer most at risk of being ceremony.
 the turtle does not fall out of the spine cleanly — if the spine has to grow a
 case, or the turtle reimplements any frame or tessellation logic — **delete the
 spine layer** in favour of a bare station list. Do not defend it.
+
+
+---
+
+## Falsification result (Phase 4)
+
+The test was stated in advance, in this ADR and in `PLAN.md` §7: if the turtle
+frontend did not fall out of the spine cleanly — if the spine had to grow a case,
+or the turtle reimplemented any frame or tessellation logic — **the spine layer
+would be deleted in favour of a bare station list, not defended.**
+
+It fell out cleanly. Recorded as facts, not recollection:
+
+- **No core module changed.** `ut_path.scad`, `ut_profile.scad`, `ut_mesh.scad`,
+  `ut_core.scad` and `ut_math.scad` were checksummed before `ut_turtle.scad` was
+  written and verified byte-identical after both new frontends were finished.
+- **Neither frontend references frame or tessellation logic at all** — zero
+  mentions of `ut_fragments`, `ut_ref_fallback`, `ut_ortho`, `_ut_transport`,
+  `ut_st_mat` or `ut_stations` between them.
+- `ut_turtle.scad` is 65 lines; `ut_curve.scad` is 53.
+
+**The strongest single piece of evidence** is the turtle's `roll` command. It
+emits no geometry: it rotates the turtle's own up-vector, which changes the plane
+of every subsequent bend and therefore the shape of the path, and then it is
+gone. Nothing about roll enters the spine, because a bender rotating the
+workpiece does not twist the tube. `SPINE-5` — *the IR carries no roll* — survived
+contact with the one frontend that has an explicit roll command, which is the
+case most likely to have broken it.
+
+Two frontend-side responsibilities were confirmed as belonging to the frontend
+rather than the spine, and neither required a change to the IR: splitting a bend
+beyond 180° into two arcs (`SPINE-4`), and deduping coincident samples before
+building a `P` segment (`STATION-1`).
+
+**The spine stays.**
