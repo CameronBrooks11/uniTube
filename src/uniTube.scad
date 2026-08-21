@@ -18,6 +18,7 @@ include <ut_core.scad>;
 include <ut_math.scad>;
 include <ut_path.scad>;
 include <ut_profile.scad>;
+include <ut_check.scad>;
 include <ut_mesh.scad>;
 include <ut_port.scad>;
 include <frontend/ut_polyline.scad>;

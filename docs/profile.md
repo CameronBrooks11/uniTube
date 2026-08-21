@@ -56,6 +56,7 @@ the whole backend to ~120 lines.
 
 ```scad
 ut_round(od=12, wall=2)      // exactly two of od / id / wall, asserted
+ut_round(od=16, wall=2, split=[-30,30])   // C-section; split is the angular GAP
 ut_round(id=8,  wall=2)      // (id, wall) is the primary spelling in the docs:
 ut_round(od=12, id=8)        //   the bore is the functional dimension, the wall
                              //   is a multiple of extrusion width
@@ -72,10 +73,16 @@ Their generators must sample **by angle**, not by arclength.
   The ring-strip cap handles exactly one hole; more needs a real
   polygon-with-holes triangulator. Deferred, with that cost stated.
 - `ut_rod`'s centroid-fan cap requires the outline to be **star-shaped about its
-  centroid** — true for any convex section. A C-section (Phase 2) is not, and
-  will need its own cap strategy.
-- A profile with an empty bore contributes nothing to the subtraction pass and
-  cannot participate in a junction.
+  centroid** — true for any convex section. No shipped constructor produces a
+  non-star-shaped closed section; one would need a real triangulator.
+- A **split** section has an inner surface but no *enclosed* lumen, so
+  `ut_bore_rgn()` and `ut_shell_rgn()` both return empty and the run cannot
+  participate in a junction. Fine for conduit and cable channel.
+
+  *(An earlier revision of this page predicted that a C-section would need its
+  own cap strategy because it is not star-shaped. It does not: representing it as
+  an OPEN ANNULUS — two loops plus two seam walls — dissolves the problem instead
+  of solving it. See ADR 0007.)*
 
 ## Deferred: variation along the path
 

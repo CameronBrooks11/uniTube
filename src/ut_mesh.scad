@@ -14,6 +14,7 @@ use <ut_math.scad>;
 use <ut_path.scad>;
 use <ut_profile.scad>;
 use <ut_port.scad>;
+use <ut_check.scad>;
 // clang-format on
 
 // Place a profile-local point into a station frame: p + x*n + y*b.
@@ -38,30 +39,39 @@ function ut_mesh_points(rgn, sts, closed = false) =
 
 // ---------------------------------------------------------------- faces
 
-function ut_mesh_faces(rgn, sts, closed = false) = let(S = len(sts), N = len(rgn[0]), hollow = len(rgn) > 1,
-                                                       last = closed ? S - 1 : S - 2) hollow
-                                                       ? _ut_faces_hollow(S, N, closed, last)
-                                                       : _ut_faces_solid(S, N, closed, last);
+function ut_mesh_faces(rgn, sts, closed = false, open = false) = let(S = len(sts), N = len(rgn[0]),
+                                                                     hollow = len(rgn) > 1,
+                                                                     last = closed ? S - 1 : S - 2) hollow
+                                                                     ? _ut_faces_hollow(S, N, closed, last, open)
+                                                                     : _ut_faces_solid(S, N, closed, last);
 
 function _ut_oi(j, i, S, N) = (j % S) * 2 * N + (i % N);
 function _ut_ii(j, i, S, N) = (j % S) * 2 * N + N + (i % N);
 function _ut_vi(j, i, S, N) = (j % S) * N + (i % N);
 
-function _ut_faces_hollow(S, N, closed, last) = concat(
+function _ut_faces_hollow(S, N, closed, last, open = false) = let(iLast = open ? N - 2 : N - 1) concat(
     // outer skin
-    [for (j = [0:last], i = [0:N - 1]) each _ut_quad(_ut_oi(j, i, S, N), _ut_oi(j, i + 1, S, N),
+    [for (j = [0:last], i = [0:iLast]) each _ut_quad(_ut_oi(j, i, S, N), _ut_oi(j, i + 1, S, N),
                                                      _ut_oi(j + 1, i + 1, S, N), _ut_oi(j + 1, i, S, N))],
     // inner skin -- reversed, so it faces INTO the bore. This one line is where
     // the CCW/CCW storage convention is paid for (see ut_profile.scad header).
-    [for (j = [0:last], i = [0:N - 1]) each _ut_quad(_ut_ii(j, i, S, N), _ut_ii(j + 1, i, S, N),
+    [for (j = [0:last], i = [0:iLast]) each _ut_quad(_ut_ii(j, i, S, N), _ut_ii(j + 1, i, S, N),
                                                      _ut_ii(j + 1, i + 1, S, N), _ut_ii(j, i + 1, S, N))],
     // annular end caps -- a ring strip, NOT a polygon-with-holes triangulation.
     // This is what keeps the emitter short, and what PROF-2 exists to protect.
     closed ? []
-           : concat([for (i = [0:N - 1]) each _ut_quad(_ut_oi(0, i, S, N), _ut_ii(0, i, S, N), _ut_ii(0, i + 1, S, N),
+           : concat([for (i = [0:iLast]) each _ut_quad(_ut_oi(0, i, S, N), _ut_ii(0, i, S, N), _ut_ii(0, i + 1, S, N),
                                                        _ut_oi(0, i + 1, S, N))],
-                    [for (i = [0:N - 1]) each _ut_quad(_ut_oi(S - 1, i, S, N), _ut_oi(S - 1, i + 1, S, N),
-                                                       _ut_ii(S - 1, i + 1, S, N), _ut_ii(S - 1, i, S, N))]));
+                    [for (i = [0:iLast]) each _ut_quad(_ut_oi(S - 1, i, S, N), _ut_oi(S - 1, i + 1, S, N),
+                                                       _ut_ii(S - 1, i + 1, S, N), _ut_ii(S - 1, i, S, N))]),
+    // THE TWO SEAM WALLS of a C-section: the cut faces that close the split
+    // along the whole run. Without them the surface is not closed and CGAL
+    // rejects the mesh outright rather than reporting a plausible solid.
+    !open ? []
+          : concat([for (j = [0:last]) each _ut_quad(_ut_oi(j, 0, S, N), _ut_oi(j + 1, 0, S, N), _ut_ii(j + 1, 0, S, N),
+                                                     _ut_ii(j, 0, S, N))],
+                   [for (j = [0:last]) each _ut_quad(_ut_oi(j, N - 1, S, N), _ut_ii(j, N - 1, S, N),
+                                                     _ut_ii(j + 1, N - 1, S, N), _ut_oi(j + 1, N - 1, S, N))]));
 
 function _ut_faces_solid(S, N, closed, last) = let(C0 = S * N, C1 = S * N + 1)
     concat([for (j = [0:last], i = [0:N - 1]) each _ut_quad(_ut_vi(j, i, S, N), _ut_vi(j, i + 1, S, N),
@@ -73,26 +83,23 @@ function _ut_faces_solid(S, N, closed, last) = let(C0 = S * N, C1 = S * N + 1)
 // ---------------------------------------------------------------- emission
 
 // Sweep a region along stations. ONE polyhedron, no CSG.
-module ut_sweep(rgn, sts, closed = false)
+module ut_sweep(rgn, sts, closed = false, open = false)
 {
     assert(len(rgn) > 0, "ut_sweep(): empty region -- a split profile has no bore to sweep");
     assert(len(sts) >= 2, "ut_sweep(): need at least 2 stations");
-    polyhedron(points = ut_mesh_points(rgn, sts, closed), faces = ut_mesh_faces(rgn, sts, closed), convexity = 10);
+    polyhedron(points = ut_mesh_points(rgn, sts, closed), faces = ut_mesh_faces(rgn, sts, closed, open),
+               convexity = 10);
 }
 
 // Sweep one run. `part` selects which region: the finished wall, the outer shell,
 // or the bore as a positive solid. Assembly NEVER asks for "solid" (rule 5).
 module ut_tube(path, prof, part = "solid", opts = [])
 {
+    assert(ut_check(path, prof));
     sts = ut_stations(path, opts);
     rgn = part == "solid" ? ut_solid_rgn(prof) : part == "shell" ? ut_shell_rgn(prof) : ut_bore_rgn(prof);
     assert(len(rgn) > 0, str("ut_tube(): part=\"", part, "\" is empty for this profile"));
-    if (ut_prof_thin(prof))
-    {
-        echo(str("WARNING [uniTube] PROF-3: wall ", ut_prof_wall(prof), " mm is below the ", ut_min_wall(),
-                 " mm minimum -- this may render perfectly and print as a hole"));
-    }
-    ut_sweep(rgn, sts, ut_closed(path));
+    ut_sweep(rgn, sts, ut_closed(path), ut_prof_open(prof) && part == "solid");
 }
 
 // The mesh volume of a run, without rendering it. Used by tests/t_mesh.scad to
@@ -101,7 +108,8 @@ function ut_run_volume(path, prof, part = "solid", opts = []) = let(sts = ut_sta
                                                                     rgn = part == "solid"   ? ut_solid_rgn(prof)
                                                                           : part == "shell" ? ut_shell_rgn(prof)
                                                                                             : ut_bore_rgn(prof))
-    ut_volume(ut_mesh_points(rgn, sts, ut_closed(path)), ut_mesh_faces(rgn, sts, ut_closed(path)));
+    ut_volume(ut_mesh_points(rgn, sts, ut_closed(path)),
+              ut_mesh_faces(rgn, sts, ut_closed(path), ut_prof_open(prof) && part == "solid"));
 
 // The two open ends of a single run. Phase 3 moves this to ut_net.scad, where
 // ports are derived from GRAPH DEGREE and a joint-incident end is not a port.
