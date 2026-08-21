@@ -1,7 +1,7 @@
 # uniTube — Development Plan
 
-**Status:** revision 2 — decisions settled. **Phases 0 and 1 merged; Phase 2
-complete and in review** (see §11 for outcomes and deviations).
+**Status:** revision 2 — decisions settled. **Phases 0-2 merged; Phase 3 complete
+and in review** (see §11 for outcomes and deviations).
 **Date:** 2026-08-21 · **Last commit:** `5d2975b`, 2025-01-10 (19 months cold)
 
 Produced by a 12-agent review (survey → four competing architectures → one
@@ -547,7 +547,7 @@ All exit criteria met:
 7 test files and 7 guards — replacing 1035 vendored lines of which ~7% was ever
 reachable.
 
-### Phase 2 — complete, in review
+### Phase 2 — merged (`db0901e`)
 
 All exit criteria met:
 
@@ -580,3 +580,45 @@ ut_tube(ut_polyline(pts, r=20),
 ```
 
 **Running totals:** 9 test files, **9 guards**, 6 examples, 8 `src/` modules.
+
+### Phase 3 — complete, in review
+
+The 4-into-1 manifold renders. **This geometry has never rendered in any commit
+of this repository.**
+
+| exit criterion | result |
+|---|---|
+| Manifold `Simple: yes`, volume within 0.5% | `Simple: yes`, Volumes 2, ~8 s |
+| **T with branch on the trunk WALL has an OPEN lumen — verified by patency, not by `Simple: yes`** | `branch_lumen_open` passes; with the bore extension disabled it reports **61.02 mm³ intruding** while `watertight` and `solid_count` still pass |
+| Coaxial jacket retains both tubes | `solid_count(2)` passes; collapsed to one group it reports **`measured 1, limit equals=2`** |
+| `ut_ports` on the manifold returns exactly the open ends | 5 of 5, joint-incident ends excluded |
+
+**A defect found by building it.** Extending only the *bore* into a joint is not
+enough. A branch whose end sits exactly on the trunk's outer surface then touches
+it **tangentially** — the shells share a circle and overlap in nothing. Measured
+`Simple: yes, Volumes: 3`: two solids. Both the shell and the bore are now
+extended, the shell to the node and the bore half a core-radius past it.
+
+**Both oracles were validated by deliberately reintroducing the bugs.** A check
+that cannot fail is worth nothing. See `docs/junctions.md`.
+
+**partspec is now the acceptance oracle** (`checks/`, `just partspec`). It is a
+DEV-TIME tool — uniTube itself still links to nothing. `keep_out` asserts lumen
+patency directly, with a mandatory anti-vacuity shell so a *deleted* part fails
+rather than passes. Filing note: partspec#274 opened against it — a failing
+`keep_out` omits the intrusion depth entirely on the mesh tier, which is the
+default for OpenSCAD models.
+
+**Deviations:**
+
+1. **Both shell and bore are extended at a joint** — `PLAN.md` §3 described only
+   the bore overlap. See above.
+2. **`ut_at()` landed here**, as scheduled in the Phase 1 deviation list. Mid-run
+   landings need it.
+3. **`just verify` split into `just cgal` + `just partspec`.** Examples now expose
+   a `part()` module so `cgal` can wrap them in a *provably no-op* intersection.
+   The previous idiom — subtracting a tiny cube — perturbs the geometry, and at
+   the origin of a manifold that is *inside the material*.
+
+**Running totals:** 10 test files, **13 guards**, 9 examples, 10 `src/` modules,
+3 partspec contracts.

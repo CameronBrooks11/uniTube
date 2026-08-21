@@ -16,6 +16,13 @@ path = ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ], [ 60, 40, 0 ], [ 60, 40, 40 ] ],
 prof = ut_round(id = 8, wall = 2);
 ports = ut_run_ports(path, prof, "demo");
 
-color("silver") ut_tube(path, prof);
-for (p = ports)
-    ut_port_marker(p);
+// The example geometry, as a module so `just verify` can wrap it in a no-op
+// boolean to force CGAL. A raw polyhedron() is never validated otherwise.
+module part()
+{
+    color("silver") ut_tube(path, prof);
+    for (p = ports)
+        ut_port_marker(p);
+}
+
+part();

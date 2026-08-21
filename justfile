@@ -126,25 +126,52 @@ test:
     done < <(find tests -maxdepth 1 -name '*.scad' 2>/dev/null | sort)
     echo "test ok ($n file(s))"
 
-# Slow mesh-property gate: forced CGAL manifoldness. Run before a release.
-verify:
+# Forced-CGAL manifoldness over every example. A raw polyhedron() is never
+# validated in preview, so "renders clean" is NOT evidence of a valid solid.
+cgal:
     #!/usr/bin/env bash
-    set -euo pipefail
-    # An example opts in by forcing a boolean (see examples/00_smoke.scad); a raw
-    # polyhedron() is never validated otherwise, so "renders clean" proves nothing.
-    mkdir -p "{{OUT}}/verify"
+    set -uo pipefail
+    mkdir -p "{{OUT}}/cgal"
     fail=0
-    while IFS= read -r f; do
-      log="{{OUT}}/verify/$(basename "${f%.scad}").log"
-      openscad --hardwarnings -o "{{OUT}}/verify/$(basename "${f%.scad}").stl" "$f" >"$log" 2>&1 || fail=1
-      if grep -qiE 'not.*valid 2-manifold|CGAL error' "$log"; then
-        echo "VERIFY FAIL: $f"; grep -iE 'not.*valid|CGAL error' "$log" | sed 's/^/    /'; fail=1
-      elif grep -q 'Simple:' "$log"; then
-        echo "  $(basename "$f"): $(grep -m1 'Simple:' "$log" | tr -s ' ')"
+    for f in examples/*.scad; do
+      b=$(basename "${f%.scad}")
+      # Wrap the example's part() in a PROVABLY NO-OP intersection. A subtracted
+      # tiny cube would also force CGAL but perturbs the geometry -- at the
+      # origin of a manifold that is inside the material.
+      printf 'use <../../%s>;\nintersection() { part(); cube(1e6, center = true); }\n' "$f" \
+        > "{{OUT}}/cgal/$b.wrap.scad"
+      log="{{OUT}}/cgal/$b.log"
+      openscad --hardwarnings -o "{{OUT}}/cgal/$b.stl" "{{OUT}}/cgal/$b.wrap.scad" >"$log" 2>&1 || true
+      if grep -q 'Simple: *yes' "$log"; then
+        echo "  ok  $b  $(grep -m1 'Volumes:' "$log" | tr -s ' ')"
       else
-        echo "  $(basename "$f"): no CGAL report (does not force a boolean — not verified)"
+        echo "  FAIL $b"; grep -iE 'Simple|not.*valid|ERROR' "$log" | head -3 | sed 's/^/       /'; fail=1
       fi
-    done < <(find examples -name '*.scad' 2>/dev/null | sort)
+    done
+    exit $fail
+
+# The full pre-release gate: CGAL manifoldness plus the partspec contracts.
+verify: cgal
+    #!/usr/bin/env bash
+    set -uo pipefail
+    if [ -d checks ]; then just partspec; else echo "  (no checks/ directory)"; fi
+
+# Declared engineering intent, verified. See checks/.
+partspec:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    # partspec is a DEV-TIME oracle, not a library dependency: uniTube itself
+    # still links to nothing. The mesh extra is required -- without it every
+    # geometry check is skipped and the run reports "5 skipped", not a pass.
+    if ! command -v uvx >/dev/null; then echo "  partspec needs uvx (astral uv); skipping"; exit 0; fi
+    fail=0
+    for d in checks/*/; do
+      [ -f "$d/spec.py" ] || continue
+      n=$(basename "$d")
+      echo "  -- $n"
+      uvx --from 'partspec[mesh]==0.7.6' partspec check "$d/spec.py" \
+          --out "{{OUT}}/partspec/$n" 2>&1 | sed 's/^/     /' || fail=1
+    done
     exit $fail
 
 # Render every example to out/ for eyeballing.

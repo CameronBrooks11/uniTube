@@ -90,6 +90,30 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
 - `--hardwarnings` is mandatory in every gate. Without it an unknown named
   argument exits 0 — the exact bug that broke this library for 19 months.
 
+## Verification tiers
+
+`just check` is the commit gate. `just verify` is the slow pre-release gate and
+splits in two:
+
+- **`just cgal`** — forced-CGAL manifoldness over every example. Each example
+  exposes a `part()` module so the recipe can wrap it in a PROVABLY NO-OP
+  intersection. Do not force CGAL by subtracting a tiny cube: it perturbs the
+  geometry, and at the origin of a manifold that is inside the material.
+- **`just partspec`** — declared engineering intent in `checks/`, verified with
+  [partspec](https://github.com/CameronBrooks11/partspec). This is a DEV-TIME
+  tool; uniTube itself still links to nothing.
+
+**`Simple: yes` is necessary and nowhere near sufficient.** Every silent failure
+this design was reviewed against passed it — a sealed branch lumen, a deleted
+coaxial liner, a self-intersecting bend, a junction held together by slivers.
+Assert patency with a `keep_out` down the lumen, and size the region INSIDE the
+modelled bore: `region.cylinder` circumscribes its declared circle while the
+modelled bore is inscribed in its own `$fn`, so a probe at nominal `d` cannot pass.
+
+**Validate every new check by deliberately reintroducing the bug it claims to
+catch.** A check that cannot fail is worth nothing. `tests/guards/` does this for
+asserts; the partspec contracts were validated the same way.
+
 ## Commits
 
 Conventional Commits, per the global rules. Scopes in use: `path`, `profile`,

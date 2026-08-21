@@ -54,8 +54,11 @@ faces = concat([for (j = [0:S - 2], i = [0:N - 1]) each quad(OI(j, i), OI(j, i +
 // The difference() against a tiny cube FORCES CGAL to evaluate the mesh. A raw
 // polyhedron() is never validated, so "renders clean" would prove nothing and
 // `just verify` would have no report to read. See AGENTS.md.
-difference()
+// The example geometry, as a module so `just verify` can wrap it in a no-op
+// boolean to force CGAL. A raw polyhedron() is never validated otherwise.
+module part()
 {
     polyhedron(points = pts, faces = faces, convexity = 8);
-    cube(0.001);
 }
+
+part();
