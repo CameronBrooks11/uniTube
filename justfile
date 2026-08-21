@@ -66,11 +66,38 @@ lint:
       echo "LINT FAIL: top-level geometry or echo under src/ (library and demo must not share a file)"; fail=1
     fi
 
+    # RULE 3 — import lines must be well-formed. clang-format rewrites
+    # `use <a/b.scad>` into `use<a / b.scad>` unless the block is wrapped in
+    # `// clang-format off` / `on`, and the resulting error names the wrong file.
+    if find src examples tests -name '*.scad' -print0 2>/dev/null \
+         | xargs -0 -r grep -nE '^[[:space:]]*(use|include)[[:space:]]*<' \
+         | grep -vE ':(use|include) <[^ >]+>;$' ; then
+      echo "LINT FAIL: malformed import line. Use exactly \`use <path>;\` inside a"
+      echo "           // clang-format off / on block. See AGENTS.md."; fail=1
+    fi
+
     [ $fail -eq 0 ] && echo "lint ok"
     exit $fail
 
+# Every file in tests/guards/ MUST fail. An untested guard is worthless.
+guards:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    mkdir -p "{{OUT}}/guards"
+    fail=0; n=0
+    for f in tests/guards/*.scad; do
+      [ -e "$f" ] || continue
+      if openscad --hardwarnings -o "{{OUT}}/guards/$(basename "${f%.scad}").stl" "$f" >/dev/null 2>&1; then
+        echo "  GUARD DID NOT FIRE: $f rendered successfully but must abort"; fail=1
+      else
+        echo "  ok  $(basename "$f") aborted as required"; n=$((n+1))
+      fi
+    done
+    [ $fail -eq 0 ] && echo "guards ok ($n guard(s) fired)"
+    exit $fail
+
 # CI equivalent: formatting + rules + every example and test renders warning-free.
-check: fmt-check lint
+check: fmt-check lint guards
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p "{{OUT}}/check"
@@ -83,7 +110,7 @@ check: fmt-check lint
       openscad --hardwarnings -o "{{OUT}}/check/$(basename "${f%.scad}").stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "CHECK FAIL: $f"; exit 1; }
       n=$((n+1))
-    done < <(find examples tests -name '*.scad' 2>/dev/null | sort)
+    done < <(find examples tests -maxdepth 1 -name '*.scad' 2>/dev/null | sort)
     echo "check ok ($n file(s) rendered warning-free)"
 
 # The assert-only subset. Fast: these files render nothing of consequence.
@@ -96,7 +123,7 @@ test:
       openscad --hardwarnings -o "{{OUT}}/test/$(basename "${f%.scad}").stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "TEST FAIL: $f"; exit 1; }
       n=$((n+1))
-    done < <(find tests -name '*.scad' 2>/dev/null | sort)
+    done < <(find tests -maxdepth 1 -name '*.scad' 2>/dev/null | sort)
     echo "test ok ($n file(s))"
 
 # Slow mesh-property gate: forced CGAL manifoldness. Run before a release.

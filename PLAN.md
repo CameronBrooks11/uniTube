@@ -1,7 +1,7 @@
 # uniTube — Development Plan
 
-**Status:** revision 2 — decisions settled, ready to execute. Nothing in the repo
-has been changed yet.
+**Status:** revision 2 — decisions settled. **Phase 0 merged; Phase 1 complete
+and in review** (see §11 for outcomes and deviations).
 **Date:** 2026-08-21 · **Last commit:** `5d2975b`, 2025-01-10 (19 months cold)
 
 Produced by a 12-agent review (survey → four competing architectures → one
@@ -499,3 +499,50 @@ under `docs/adr/` in Phase 0 so the reasoning doesn't live only in this file.
 | **Multi-lumen profiles** (>1 bore) | Needs polygon-with-holes triangulation | The ring-strip cap only works for one bore. This is the one place a real triangulator is unavoidable. |
 | **`ut_route`, `ut_bezier`, IR combinators** | v0.3+ | Combinators need roll keyframes re-keyed by (segment index, fraction) so they survive composition. |
 | **`ut_bend_table(spine)`** | Speculative | The LRA program for a CNC tube bender. Falls out of the arc-native spine almost free if you ever want it. |
+
+
+---
+
+## 11. Phase outcomes
+
+### Phase 0 — merged (`2559b77`)
+
+Tree reorganised, BSD-2 licensing, `reference/` quarantine, and a `just check`
+gate verified in both directions. All 18 moved files byte-identical.
+
+### Phase 1 — complete, in review
+
+All exit criteria met:
+
+| criterion | result |
+|---|---|
+| 90° elbow renders as one valid 2-manifold | `Simple: yes`, Volumes 2 |
+| **Every bend in the legacy demo is visible** | 12 segments, all 6 arcs present, `Simple: yes` |
+| Exact developed length | 93.5619449019, asserted to 1e-9 |
+| Port `dir` exact, not smoothed | exactly `[0,1,0]`, asserted to 1e-12 |
+| Planar bend produces zero twist | every normal exactly `[0,0,1]`, asserted to 1e-12 |
+| Mesh volume within 0.5% of analytic | 0.17% |
+| `just check` / `test` / `verify` | green: 11 rendered, 7 test files, 7 guards fire |
+
+**Deviations from this plan, each recorded where it lives:**
+
+1. **Both profile loops are stored CCW**, not outer-CCW / inner-CW. Reversing the
+   inner loop destroys the `PROF-2` index correspondence and stops the bore being
+   a directly usable positive solid. The emitter orients the inner skin instead.
+   (ADR 0006, `docs/profile.md`.)
+2. **`src/uniTube.scad` uses `include`, not `use`.** `use` does not transitively
+   re-export — verified. Internal modules still use `use`. (AGENTS.md.)
+3. **Added `tests/guards/` and `just guards`** — seven files that MUST abort, each
+   checked to fail on its intended assertion rather than a syntax error. Not in
+   the plan; an untested guard is worthless.
+4. **`.clang-format` needed two fixes** found by being bitten: `BreakStringLiterals:
+   false` (it split a long assert message into `"a" "b"`, a C idiom and an
+   OpenSCAD syntax error) and mandatory `// clang-format off` guards around import
+   blocks (it rewrote `use <a/b.scad>` into `use<a / b.scad>`). `just lint` rule 3
+   now catches malformed imports.
+5. **`ut_at()`** (station at arclength) is deferred to Phase 3, where joints
+   actually need it. Nothing in Phase 1 used it.
+
+**Scale:** ~1200 lines of first-party `.scad` across 7 `src/` modules, 3 examples,
+7 test files and 7 guards — replacing 1035 vendored lines of which ~7% was ever
+reachable.
