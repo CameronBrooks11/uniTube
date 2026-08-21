@@ -1,7 +1,7 @@
 # uniTube — Development Plan
 
-**Status:** revision 2 — decisions settled. **Phase 0 merged; Phase 1 complete
-and in review** (see §11 for outcomes and deviations).
+**Status:** revision 2 — decisions settled. **Phases 0 and 1 merged; Phase 2
+complete and in review** (see §11 for outcomes and deviations).
 **Date:** 2026-08-21 · **Last commit:** `5d2975b`, 2025-01-10 (19 months cold)
 
 Produced by a 12-agent review (survey → four competing architectures → one
@@ -510,7 +510,7 @@ under `docs/adr/` in Phase 0 so the reasoning doesn't live only in this file.
 Tree reorganised, BSD-2 licensing, `reference/` quarantine, and a `just check`
 gate verified in both directions. All 18 moved files byte-identical.
 
-### Phase 1 — complete, in review
+### Phase 1 — merged (`017442c`)
 
 All exit criteria met:
 
@@ -546,3 +546,37 @@ All exit criteria met:
 **Scale:** ~1200 lines of first-party `.scad` across 7 `src/` modules, 3 examples,
 7 test files and 7 guards — replacing 1035 vendored lines of which ~7% was ever
 reachable.
+
+### Phase 2 — complete, in review
+
+All exit criteria met:
+
+| criterion | result |
+|---|---|
+| Split conduit valid over two bends in **different planes**, no spiral | `Simple: yes`; gap faces exactly world-up on every horizontal station, to 1e-9 |
+| `ut_check` aborts on od=12 through r=4 | aborts naming the radius and the reach |
+| Square bore in round shell, no special case | `Simple: yes`, Volumes 2 |
+
+**The case that justifies `ut_check`, measured.** An od=12 tube swept through an
+r=4 bend passes through itself, and CGAL reports `Simple: yes, Volumes: 2` with a
+plausible positive volume and **zero warnings**. No amount of rendering finds
+that; only arithmetic on the spine does.
+
+**Deviation — and it went better than predicted.** `PLAN.md` §3 described the
+split section as one closed C-shaped loop, and `docs/profile.md` predicted the
+consequence: a C-section is not star-shaped about its centroid, so it would need
+its own cap strategy — realistically the general triangulator ADR 0001 deferred.
+Representing it instead as an **open annulus** — the same two loops, plus two
+seam walls — dissolved the problem. One extra term in the emitter, no
+triangulator, and `PROF-2` correspondence preserved for free. See ADR 0007.
+
+`half_curvedPipe.scad`'s ~300 lines and its hard nine-segment ceiling are now a
+constructor argument and a policy string:
+
+```scad
+ut_tube(ut_polyline(pts, r=20),
+        ut_round(od=16, wall=2, split=[-30,30]),
+        opts=[["frame","fixed"], ["normal",[0,0,1]]]);
+```
+
+**Running totals:** 9 test files, **9 guards**, 6 examples, 8 `src/` modules.
