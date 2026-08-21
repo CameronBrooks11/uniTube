@@ -21,5 +21,6 @@ include <ut_profile.scad>;
 include <ut_check.scad>;
 include <ut_mesh.scad>;
 include <ut_port.scad>;
+include <ut_net.scad>;
 include <frontend/ut_polyline.scad>;
 // clang-format on

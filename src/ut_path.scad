@@ -171,3 +171,30 @@ function ut_st_p(st) = st[0];
 function ut_st_t(st) = st[1];
 function ut_st_n(st) = st[2];
 function ut_st_s(st) = st[3];
+
+// ---------------------------------------------------------------- ut_at
+
+// Position and tangent at a given arclength, computed EXACTLY from the spine --
+// no tessellation, no interpolation between stations. Deferred from Phase 1
+// because nothing needed it; joints need it for mid-run landings, which is the
+// case where a branch meets a trunk somewhere along its length.
+// Returns [position, unit tangent].
+function ut_at(path, s) = let(segs = ut_segs(path), total = ut_length(path))
+    assert(s >= -ut_eps() && s <= total + ut_eps(),
+           str("ut_at(): arclength ", s, " is outside the path (0 .. ", total, ")")) _ut_at(segs, 0, s);
+
+function _ut_at(segs, i, s) = let(L = ut_seg_len(segs[i]))(i >= len(segs) - 1 || s <= L + ut_eps())
+                                  ? _ut_seg_at(segs[i], min(s, L))
+                                  : _ut_at(segs, i + 1, s - L);
+
+function _ut_seg_at(seg, s) = seg[0] == "L" ? let(d = ut_unit(seg[2] - seg[1]))[seg[1] + s * d, d]
+                              : seg[0] == "A"
+                                  ? let(c = seg[1], u = seg[2], v = seg[3], r = seg[4], ang = seg[5],
+                                        x = s / (ang / 360 * 2 * PI * r),
+                                        a = ang * x)[c + r * (cos(a) * u + sin(a) * v), -sin(a) * u + cos(a) * v]
+                                  : _ut_chain_at(seg[1], seg[2], 0, s);
+
+function _ut_chain_at(p, t, i,
+                      s) = let(L = norm(p[i + 1] - p[i]))(i >= len(p) - 2 || s <= L + ut_eps())
+                               ? [ p[i] + min(s, L) * ut_unit(p[i + 1] - p[i]), ut_unit(t[min(i + 1, len(t) - 1)]) ]
+                               : _ut_chain_at(p, t, i + 1, s - L);

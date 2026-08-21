@@ -22,8 +22,11 @@ pts = [
 ];
 radii = [ 70, 30, 30, 6, 50, 30 ];
 
-difference()
+// The example geometry, as a module so `just verify` can wrap it in a no-op
+// boolean to force CGAL. A raw polyhedron() is never validated otherwise.
+module part()
 {
     ut_tube(ut_polyline(pts, r = radii), ut_round(od = 10, id = 8));
-    cube(0.001);
 }
+
+part();

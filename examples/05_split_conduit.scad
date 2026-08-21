@@ -24,8 +24,11 @@ $fs = 0.5;
 path = ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ], [ 60, 40, 0 ], [ 60, 40, 40 ] ], r = 20);
 prof = ut_round(od = 16, wall = 2, split = [ -30, 30 ]);
 
-difference()
+// The example geometry, as a module so `just verify` can wrap it in a no-op
+// boolean to force CGAL. A raw polyhedron() is never validated otherwise.
+module part()
 {
     ut_tube(path, prof, opts = [ [ "frame", "fixed" ], [ "normal", [ 0, 0, 1 ] ] ]);
-    cube(0.001);
 }
+
+part();
