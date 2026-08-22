@@ -27,18 +27,21 @@ use <ut_math.scad>;
 
 // Exactly two of {od, id, wall}. Supplying one or three is an error naming what
 // was given -- all three spellings describe the same profile.
-function ut_round(od = undef, id = undef, wall = undef, n = undef, a0 = 0,
-                  split = undef) = let(given = (is_undef(od) ? 0 : 1) + (is_undef(id) ? 0 : 1) +
-                                               (is_undef(wall) ? 0 : 1))
-    assert(given == 2,
-           str("ut_round(): give exactly two of od/id/wall, got ", given, " (od=", od, " id=", id, " wall=", wall, ")"))
-        let(OD = is_undef(od) ? id + 2 * wall : od, ID = is_undef(id) ? od - 2 * wall : id,
-            W = is_undef(wall) ? (od - id) / 2 : wall)
-            assert(OD > 0 && ID >= 0 && W > 0,
-                   str("ut_round(): implied dimensions must be positive (od=", OD, " id=", ID, " wall=", W, ")"))
-                assert(ID < OD, str("ut_round(): id (", ID, ") must be less than od (", OD,
-                                    ")"))(is_undef(split) ? _ut_round_closed(OD, ID, W, n, a0)
-                                                          : _ut_round_split(OD, ID, W, n, split));
+function ut_round(od = undef, id = undef, wall = undef, n = undef, a0 = 0, split = undef) = let(
+    given = (is_undef(od) ? 0 : 1) + (is_undef(id) ? 0 : 1) +
+            (is_undef(wall) ? 0 : 1)) assert(given == 2, str("ut_round(): give exactly two of od/id/wall, got ", given,
+                                                             " (od=", od, " id=", id, " wall=", wall, ")"))
+    let(OD = is_undef(od) ? id + 2 * wall : od, ID = is_undef(id) ? od - 2 * wall : id,
+        W = is_undef(wall) ? (od - id) / 2 : wall) assert(OD > 0 && ID >= 0 && W > 0,
+                                                          str("ut_round(): implied dimensions must be positive (od=",
+                                                              OD, " id=", ID, " wall=", W, ")"))
+        assert(
+            ID > 0,
+            str("ut_round(): a zero bore is not a tube (id=", ID, "). Use ut_rod(d=", OD,
+                ") for a solid rod -- an id of 0 collapses the inner loop to a point and reports only \"PROF-1: inner loop must also be counter-clockwise\"."))
+            assert(ID < OD, str("ut_round(): id (", ID, ") must be less than od (", OD,
+                                ")"))(is_undef(split) ? _ut_round_closed(OD, ID, W, n, a0)
+                                                      : _ut_round_split(OD, ID, W, n, split));
 
 function _ut_round_closed(OD, ID, W, n, a0) = let(N = is_undef(n) ? ut_fragments(OD / 2, 360) : n)
     ut_profile(ut_ring(OD / 2, N, a0), ut_ring(ID / 2, N, a0),
