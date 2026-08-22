@@ -138,4 +138,22 @@ assert(ut_check_net(bigtee), "a branch that FITS inside its trunk's bore and is 
 // And the 4-into-1 manifold, five runs meeting at one node, still validates.
 assert(ut_check_net(man), "the manifold must not trip NET-5 either");
 
+// ============================================ body = "none"
+// A documented joint body with no coverage at all. It emits no sphere, so the
+// shells must overlap on their own -- NET-3 is what makes that safe. NET-4 must
+// SKIP it: a "none" joint has no ball, so "the ball has no wall" cannot apply,
+// and a bodyless joint whose incident bores happen to match the reach would
+// otherwise abort on a rule about a sphere that is never emitted.
+bare = ut_net(
+    [
+        ut_run("t2", ut_polyline([ [ -60, 0, 0 ], [ 60, 0, 0 ] ]), ut_round(od = 20, wall = 2.5)),
+        ut_run("b2", ut_polyline([ [ 0, 0, 0 ], [ 0, 0, 55 ] ]), ut_round(od = 12, wall = 2)),
+    ],
+    [ut_joint([ [ "t2", [ "s", 60 ] ], [ "b2", "a" ] ], body = "none")]);
+assert(ut_check_net(bare), "a joint with body=\"none\" must validate");
+assert(ut_joint_body(ut_net_joints(bare)[0]) == "none", "and it must round-trip through the record");
+// Its ends are still consumed by the joint, so neither becomes a port.
+assert(len([for (pt = ut_ports(bare)) if (ut_port_name(pt) == "b2.a") 1]) == 0,
+       "a bodyless joint still consumes the run ends incident to it");
+
 cube(0.001); // sentinel
