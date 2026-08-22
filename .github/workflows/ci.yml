@@ -18,9 +18,10 @@ jobs:
     # stop testing the floor.
     runs-on: ubuntu-24.04
     env:
-      # Free insurance. STL export needs no X server -- verified -- so there is
-      # no xvfb here; the community habit of wrapping OpenSCAD in xvfb-run comes
-      # from PNG rendering, which this repo never does.
+      # STL export needs no X server -- verified. PNG PREVIEW DOES: `just preview`
+      # renders through OpenCSG, which needs a real GL context, and OpenSCAD
+      # segfaults under offscreen. That recipe borrows xvfb itself; everything
+      # else stays headless under this.
       QT_QPA_PLATFORM: offscreen
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +54,7 @@ jobs:
         # headless. Install it explicitly rather than letting the recipe decide
         # it cannot run -- a preview gate that skips reads exactly like a pass,
         # and the defect it exists to catch was invisible to every other gate.
-        run: sudo apt-get install -y --no-install-recommends libgl1-mesa-dri xvfb
+        run: sudo apt-get install -y --no-install-recommends libgl1-mesa-dri xvfb mesa-utils
 
       - name: partspec must actually run, not skip
         # `just partspec` exits 0 when uvx is absent, which is friendly locally

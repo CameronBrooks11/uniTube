@@ -131,7 +131,16 @@ preview:
     #!/usr/bin/env bash
     set -uo pipefail
     mkdir -p "{{OUT}}/preview"
-    export QT_QPA_PLATFORM=offscreen
+    # OpenCSG needs a real GL context. QT_QPA_PLATFORM=offscreen has none and
+    # OpenSCAD SEGFAULTS -- which is why every other recipe here can stay
+    # headless and this one cannot. Under a bare CI runner, borrow one.
+    if [ -n "${DISPLAY:-}" ]; then
+      RUN=""
+    elif command -v xvfb-run >/dev/null; then
+      RUN="xvfb-run -a --server-args=-screen 0 1024x768x24"
+    else
+      echo "  preview needs a GL context (a DISPLAY, or xvfb-run) -- NOT skipping, a skip here reads as a pass"; exit 1
+    fi
     py=python3
     if ! python3 -c 'import PIL' >/dev/null 2>&1; then
       command -v uvx >/dev/null || { echo "  preview needs Pillow or uvx -- NOT skipping, a skip here reads as a pass"; exit 1; }
@@ -142,7 +151,7 @@ preview:
       b=$(basename "${f%.scad}")
       png="{{OUT}}/preview/$b.png"
       # NO --render: this is the OpenCSG preview path, deliberately.
-      openscad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
+      $RUN openscad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
       [ -s "$png" ] || { echo "  FAIL $b  (no preview image produced -- no GL?)"; fail=1; continue; }
       # An example that deliberately exposes an interior declares it in the file.
       if grep -q 'preview-exposes-interior' "$f"; then limit=100; else limit=2; fi
