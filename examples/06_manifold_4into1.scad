@@ -2,7 +2,7 @@
 //
 // Four inlets converging into one outlet. This is the driving application the
 // whole project was started for, and it has never rendered in ANY commit of this
-// repository: the 2023 attempt (reference/jantecnl/) got about 60% of the way
+// repository: the 2023 attempt (see docs/salvage.md §4) got about 60% of the way
 // and stopped at the bend lumen, calling torusSlice_only_inner_pipes(), which
 // `git log -S` confirms was never defined anywhere.
 //
