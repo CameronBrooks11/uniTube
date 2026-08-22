@@ -96,8 +96,28 @@ guards:
     [ $fail -eq 0 ] && echo "guards ok ($n guard(s) fired)"
     exit $fail
 
+# Every advisory warning the library can emit must still be emitted.
+warnings:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    mkdir -p "{{OUT}}/warnings"
+    # These are echo() calls, NOT OpenSCAD WARNING: lines, so --hardwarnings does
+    # not promote them and tests/guards/ cannot cover them -- a guard must abort.
+    # Silencing one would otherwise pass every gate.
+    log="{{OUT}}/warnings/w_all.log"
+    openscad --hardwarnings -o "{{OUT}}/warnings/w_all.stl" tests/warnings/w_all.scad >"$log" 2>&1 || true
+    fail=0
+    for w in CHECK-2 CHECK-3 NET-4; do
+      if grep -q "WARNING \[uniTube\] $w" "$log"; then
+        echo "  ok   $w still fires"
+      else
+        echo "  FAIL $w no longer fires -- it was silenced, or its trigger changed"; fail=1
+      fi
+    done
+    exit $fail
+
 # CI equivalent: formatting + rules + every example and test renders warning-free.
-check: fmt-check lint guards
+check: fmt-check lint guards warnings
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p "{{OUT}}/check"

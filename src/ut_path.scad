@@ -111,10 +111,17 @@ function _ut_samples_A(s, first) = let(c = s[1], u = s[2], v = s[3], r = s[4], a
     x = k / n,
     a = ang * x)[c + r * (cos(a) * u + sin(a) * v), -sin(a) * u + cos(a) * v, ax, k == 0 ? 0 : ang / n, arclen *x]];
 
-function _ut_samples_P(s, first) = let(p = s[1], t = s[2], k0 = first ? 0 : 1)[for (k = [k0:len(p) - 1]) let(
+// The cumulative chain length, computed ONCE per segment. Recomputing it per
+// sample made this O(n^2): a 220-sample helix did ~24k norm() calls to place
+// 220 stations.
+function _ut_cumlen(p, i = 0, acc = [0]) = i >= len(p) - 1
+                                               ? acc
+                                               : _ut_cumlen(p, i + 1, concat(acc, [acc[i] + norm(p[i + 1] - p[i])]));
+
+function _ut_samples_P(s, first) = let(p = s[1], t = s[2], k0 = first ? 0 : 1,
+                                       cum = _ut_cumlen(p))[for (k = [k0:len(p) - 1]) let(
     prev = k == 0 ? t[0] : t[k - 1], d = ut_turn(prev, t[k]),
-    cx = cross(prev, t[k]))[p[k], ut_unit(t[k]), d < 1e-9 ? ut_up() : ut_unit(cx), k == 0 ? 0 : d,
-                            _ut_chain_len([for (j = [0:k]) p[j]], 0)]];
+    cx = cross(prev, t[k]))[p[k], ut_unit(t[k]), d < 1e-9 ? ut_up() : ut_unit(cx), k == 0 ? 0 : d, cum[k]]];
 
 function _ut_gather(segs, i, base, acc) = i >= len(segs)
                                               ? acc

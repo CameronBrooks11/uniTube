@@ -14,6 +14,10 @@
 
 function ut_port(name, p, dir, n, profile, s) = [ "utport", name, p, dir, n, profile, s ];
 
+// These accessors are the documented public surface of the seam (ADR 0005) and
+// are deliberately unused inside this library: a terminations library reads
+// them, and coupling to a DATA FORMAT rather than a geometry engine is the whole
+// point. Do not delete them for being uncalled here.
 function ut_port_name(p) = p[1];
 function ut_port_pos(p) = p[2];
 function ut_port_dir(p) = p[3];
