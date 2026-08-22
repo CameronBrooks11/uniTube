@@ -271,9 +271,6 @@ function _ut_net5(net) = let(bad = [for (g = ut_groups(net)) let(rs = _ut_runs_i
                ". These runs share a lumen group, so the outer bore would delete the inner run entirely. ",
                "Put the inner run in its own group: ut_run(name, path, prof, group=1).")) true;
 
-// B nests inside A's bore when B fits within it AND the two are actually near
-// each other. A heuristic on endpoints, documented as one -- it catches the real
-// case (a jacket sharing a path) without a full path-distance computation.
 // B nests inside A's bore when B FITS in it and B's centreline actually enters
 // it. "Fits" is what distinguishes NESTING (a tube inside a tube, which the
 // subtraction pass deletes) from INTERSECTING (a junction, which is the point).
