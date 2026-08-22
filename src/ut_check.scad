@@ -38,7 +38,7 @@ function _ut_min_circumradius(p, i, acc) =
 // CHECK-1 — a bend radius must exceed the profile's outer reach, strictly.
 // At r == reach the inner extremity of the swept surface collapses onto the bend
 // axis; below it, the tube passes through itself.
-function _ut_chk_bends(segs, i, reach, od) =
+function _ut_chk_bends(segs, i, reach) =
     i >= len(segs) ? true
     : (ut_seg_kind(segs[i]) == "P")
         ? let(r = _ut_min_circumradius(segs[i][1], 0, 1e18)) assert(
@@ -46,14 +46,14 @@ function _ut_chk_bends(segs, i, reach, od) =
               str("CHECK-1: the tightest curvature on this sampled path has radius ", r,
                   ", which is not greater than the profile's outer reach ", reach,
                   " -- the tube passes through itself. Sampled estimate: it fails OPEN, so a marginal case can still slip through."))
-              _ut_chk_bends(segs, i + 1, reach, od)
+              _ut_chk_bends(segs, i + 1, reach)
     : (ut_seg_kind(segs[i]) != "A")
-        ? _ut_chk_bends(segs, i + 1, reach, od)
+        ? _ut_chk_bends(segs, i + 1, reach)
         : let(r = segs[i][4])
               assert(r > reach + ut_eps(),
                      str("CHECK-1: bend radius ", r, " is not greater than the profile's outer reach ", reach,
                          " -- the tube passes through itself at this bend. CGAL will still report \"Simple: yes\"."))
-                  _ut_chk_bends(segs, i + 1, reach, od);
+                  _ut_chk_bends(segs, i + 1, reach);
 
 // CHECK-2 — a bend tighter than one full diameter is legal but ugly and hard to
 // print. A warning, never an error.
@@ -75,5 +75,5 @@ function _ut_warn_wall(prof) = !ut_prof_thin(prof)
 // Validate a run. Returns true so it can prefix an expression or sit in an
 // assert. ut_tube() calls this on every render.
 function ut_check(path, prof) = let(segs = ut_segs(path), reach = ut_prof_reach(prof), od = ut_prof_od(prof))
-                                    _ut_chk_bends(segs, 0, reach, is_undef(od) ? 2 * reach : od) &&
+                                    _ut_chk_bends(segs, 0, reach) &&
                                 _ut_warn_tight(segs, 0, is_undef(od) ? 2 * reach : od) && _ut_warn_wall(prof);

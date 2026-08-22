@@ -1,5 +1,5 @@
-// ut_math — the ~25 lines that replace 1035 lines of vendored maths.scad and
-// vector.scad. See docs/salvage.md §5.
+// ut_math — the handful of functions that replace 1035 lines of vendored
+// maths.scad and vector.scad. See docs/salvage.md §5.
 
 // clang-format off
 use <ut_core.scad>;

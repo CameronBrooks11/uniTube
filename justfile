@@ -53,12 +53,15 @@ lint:
     set -euo pipefail
     fail=0
 
-    # RULE 1 — src/ may never import from reference/ (licence quarantine).
+    # LINT RULE 1 — src/ may never import from reference/ (AGENTS.md rule 2,
+    # the licence quarantine). These are the LINT's own numbers; AGENTS.md rule
+    # N is a different list, and each rule below names the project rule it backs.
     if grep -rnE '^[[:space:]]*(use|include)[[:space:]]*<[^>]*reference/' src/ 2>/dev/null; then
       echo "LINT FAIL: a file under src/ imports from reference/ (see AGENTS.md)"; fail=1
     fi
 
-    # RULE 2 — no file under src/ may emit top-level geometry or echo on import.
+    # LINT RULE 2 — no file under src/ may emit top-level geometry or echo on
+    # import (AGENTS.md rule 3).
     # Top-level statements sit at column 0; `function f(` / `module m(` / `use <`
     # / assignments do not match this pattern, but `cube(`, `echo(`, `if (` do.
     if find src -name '*.scad' -print0 2>/dev/null \
@@ -66,7 +69,7 @@ lint:
       echo "LINT FAIL: top-level geometry or echo under src/ (library and demo must not share a file)"; fail=1
     fi
 
-    # RULE 3 — import lines must be well-formed. clang-format rewrites
+    # LINT RULE 3 — import lines must be well-formed. clang-format rewrites
     # `use <a/b.scad>` into `use<a / b.scad>` unless the block is wrapped in
     # `// clang-format off` / `on`, and the resulting error names the wrong file.
     if find src examples tests -name '*.scad' -print0 2>/dev/null \
