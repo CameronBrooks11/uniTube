@@ -353,7 +353,14 @@ pre-NET-5 description above the replacement, and `ut_math` claimed a line count
 it had outgrown. `just lint`'s rules renumbered to `LINT RULE n` so they stop
 colliding with `AGENTS.md`'s own list.
 
-**Guards: 32 → 34.** All five gates green: `check`, `test`, `cgal` (12/12),
+Finally, `examples/00_smoke.scad` is retired — the last unticked half of queue
+item 3.3. Its own header called it throwaway: it existed to prove `just check`
+and `just verify` worked end to end *before `src/` had any content*, and it never
+imported the library. Phase 1's `01_elbow.scad` replaced it, and eleven examples
+now exercise the real thing. It cost a full CGAL run on every commit to
+re-verify a mechanism that `tests/t_mesh.scad` covers against the actual backend.
+
+**Guards: 32 → 34.** All five gates green: `check`, `test`, `cgal` (11/11),
 `warnings`, `partspec` (19/19).
 
 ### What remains, unchanged
