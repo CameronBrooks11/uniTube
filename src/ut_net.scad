@@ -180,9 +180,38 @@ function _ut_joints_in(net, g) =
 
 // Assemble the network. CSG appears in exactly ONE place in this library, and
 // this is it.
+// PREVIEW CORRECTNESS IS PART OF BEING RIGHT. Preview (F5) is the mode this
+// library is actually used in, and OpenCSG renders difference() by depth-peeling
+// the framebuffer, not by computing geometry. A hollow run has high depth
+// complexity, and OpenCSG silently ran out of layers: measured on
+// examples/08, 79.3% of the model's pixels were the SUBTRACTED bore's back
+// faces painted over the shell. The part looked like a solid green slug, and an
+// STL exported from that state carried 3429 non-manifold edges and a negative
+// volume, because preview geometry is not geometry.
+//
+// polyhedron(convexity=) does NOT fix it -- verified identical at 10, 20 and 40.
+// render() does, by evaluating the CSG for real instead of faking it. It costs
+// a CGAL evaluation in preview (measured 1.9 s for the jacket), which is the
+// correct trade: every gate in this repository exists because a wrong answer
+// that renders is worse than a slow one.
+//
+// opts [["preview","fast"]] opts out, for a model too heavy to evaluate live.
+// It is not the default, because the default must not lie.
 module ut_assemble(net, opts = [])
 {
     assert(ut_check_net(net));
+    if (ut_opt(opts, "preview", "exact") == "fast")
+    {
+        _ut_assembly(net, opts);
+    }
+    else
+    {
+        render(convexity = 10) _ut_assembly(net, opts);
+    }
+}
+
+module _ut_assembly(net, opts)
+{
     for (g = ut_groups(net))
     {
         difference()
