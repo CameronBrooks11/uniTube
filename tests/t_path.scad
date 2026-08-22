@@ -136,4 +136,35 @@ assert(ut_turn(ut_st_n(csts[CN - 1]), ut_st_n(csts[0])) < 1e-6,
        str("closed-loop holonomy residual must vanish, got ", ut_turn(ut_st_n(csts[CN - 1]), ut_st_n(csts[0]))));
 assert(max([for (s = csts) abs(ut_st_t(s) * ut_st_n(s))]) < 1e-9, "frames stay orthonormal all the way round");
 
+// ================================================================ ut_at
+// ut_at() had NO test at all, which is why the bug below survived: it reads
+// position and tangent EXACTLY from the spine, and the tangent was wrong on
+// every P segment.
+
+// L and A segments are exact by construction.
+apath = ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ], [ 60, 60, 0 ] ], r = 20);
+assert(norm(ut_at(apath, 10)[0] - [ 10, 0, 0 ]) < 1e-9, "ut_at: position on a straight");
+assert(ut_turn(ut_at(apath, 10)[1], [ 1, 0, 0 ]) < 1e-9, "ut_at: tangent on a straight");
+assert(ut_turn(ut_at(apath, ut_length(apath) / 2)[1], ut_unit([ 1, 1, 0 ])) < 1e-9,
+       "ut_at: the midpoint of a symmetric elbow bisects the turn exactly");
+assert(ut_turn(ut_at(apath, ut_length(apath))[1], [ 0, 1, 0 ]) < 1e-9, "ut_at: the far end tangent");
+
+// A P segment. The tangent is interpolated along the chord, so at a SAMPLE it is
+// exactly the stored tangent. It used to be t[i+1] for every s, so ut_at(p, 0)
+// returned the tangent one sample downstream -- measured 8.94 degrees out at the
+// start of this very helix, one full sample's rotation, on a public function
+// documented to return the tangent at s.
+hf = function(t)[40 * cos(360 * t), 40 * sin(360 * t), 30 * t];
+hd = function(t)[-2 * PI * 40 * sin(360 * t), 2 * PI * 40 * cos(360 * t), 30];
+hp = ut_curve(hf, n = 40, dfdt = hd);
+HL = ut_length(hp);
+assert(ut_turn(ut_at(hp, 0)[1], ut_unit(hd(0))) < 1e-9,
+       str("ut_at: the tangent at s=0 is the tangent AT s=0, got ", ut_turn(ut_at(hp, 0)[1], ut_unit(hd(0))), " deg"));
+assert(ut_turn(ut_at(hp, HL)[1], ut_unit(hd(1))) < 1e-9, "ut_at: and at the far end");
+// Between samples it stays second order -- 0.021 deg worst case at n=40.
+assert(max([for (fr = [ 0.012, 0.137, 0.5, 0.863, 0.988 ]) ut_turn(ut_at(hp, HL *fr)[1], ut_unit(hd(fr)))]) < 0.05,
+       "ut_at: interpolated tangents stay within 0.05 deg between samples");
+// Position still walks the chain correctly.
+assert(norm(ut_at(hp, 0)[0] - hf(0)) < 1e-9, "ut_at: position at s=0");
+
 cube(0.001); // sentinel
