@@ -54,10 +54,20 @@ function _ut_tt_bend(cmds, i, pos, dir, up, acc, ang, r) =
                 assert(abs(ang) > ut_eps(),
                        str("ut_turtle(): bend of ", ang, " degrees at command ", i, " does nothing"))
             // SPINE-4 caps one arc at 180 degrees. Splitting is the FRONTEND's job:
-            // the spine does not grow a case for it.
+            // the spine does not grow a case for it. The bend is replaced in
+            // place by two halves and re-entered at the SAME index, so a bend of
+            // any size converges by repeated halving.
+            //
+            // BOTH slices must be guarded against being empty. OpenSCAD SILENTLY
+            // REVERSES a descending range -- [0:-1] evaluates to [-1, 0], with no
+            // warning under --hardwarnings -- so an unguarded prefix splices
+            // cmds[-1] (undef) into the program whenever the bend is the FIRST
+            // command, and an unguarded suffix re-splices the bend itself when it
+            // is the LAST. Measured: both aborted with
+            // `unknown command "undef"`, naming the wrong cause entirely.
             abs(ang) > 180 - 1e-9
-        ? _ut_tt(concat([for (k = [0:i - 1]) cmds[k]], [ [ "bend", ang / 2, r ], [ "bend", ang / 2, r ] ],
-                        [for (k = [i + 1:len(cmds) - 1]) cmds[k]]),
+        ? _ut_tt(concat(i == 0 ? [] : [for (k = [0:i - 1]) cmds[k]], [ [ "bend", ang / 2, r ], [ "bend", ang / 2, r ] ],
+                        i >= len(cmds) - 1 ? [] : [for (k = [i + 1:len(cmds) - 1]) cmds[k]]),
                  i, pos, dir, up, acc)
         : let(s = ang < 0 ? -1 : 1, a = abs(ang), toward = s * up, c = pos + r * toward,
               axis = ut_unit(cross(dir, toward)), u = ut_unit(pos - c), v = cross(axis, u))
