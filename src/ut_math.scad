@@ -34,10 +34,37 @@ function ut_ortho(t, n) = let(tu = ut_unit(t), p = n - tu * (n * tu)) ut_unit(p)
 function ut_fragments(r, ang = 360) = let(full = $fn > 0 ? max($fn, 3) : ceil(max(min(360 / $fa, r * 2 * PI / $fs), 5)))
     max(2, ceil(full *abs(ang) / 360));
 
+// The inradius of the polyhedron OpenSCAD actually emits for sphere(r) -- the
+// distance to its nearest FACE, not to its vertices, which sit on r.
+//
+// A sphere is faceted in two directions at once, so it loses cos(180/n) twice.
+// Verified against the emitted mesh: EXACT for n >= 8 (8.5355, 9.3301, 9.8296,
+// 9.9039, 9.9572 at n = 8, 12, 24, 32, 48 for r=10) and conservative below it
+// (6.545 modelled vs 7.330 actual at n=5). Erring low is the safe direction for
+// anything that has to fit inside the result.
+function ut_sphere_inradius(r) = let(n = ut_fragments(r, 360)) r * pow(cos(180 / n), 2);
+
 // A closed CCW polygon of n points on a circle of radius r, sampled by ANGLE.
 // Angle-sampling is what makes two loops correspondence-aligned (PROF-2 /
 // ADR 0006); sampling by arclength does not, and self-intersects the end caps.
 function ut_ring(r, n, a0 = 0) = [for (i = [0:n - 1]) let(a = a0 + 360 * i / n)[r * cos(a), r *sin(a)]];
+
+// The largest circle centred on the origin that fits inside a closed 2D loop.
+//
+// This is the distance to the EDGES, not to the vertices. For a polygon they are
+// different by cos(180/n), and using the vertices overstates the answer at every
+// resolution -- ut_ring() puts its points exactly on the nominal circle, so a
+// vertex-based "inradius" returns the nominal radius forever while the real
+// inscribed circle is smaller. That overstatement let a joint's subtracted core
+// sphere punch through a run's outer wall at coarse $fn, silently.
+//
+// Distance is taken to the edge's infinite LINE. For a non-convex loop the
+// perpendicular foot can fall outside the segment, so this UNDER-estimates --
+// which is the safe direction for anything that gets subtracted.
+function ut_inradius(loop) = min([for (i = [0:len(loop) - 1]) _ut_edge_dist(loop, i)]);
+function _ut_edge_dist(p, i) = let(a = p[i], b = p[(i + 1) % len(p)], d = b - a, L = norm(d)) L < ut_eps()
+                                   ? norm(a)
+                                   : abs(a[0] * d[1] - a[1] * d[0]) / L;
 
 // Signed area of a 2D polygon. Positive = counter-clockwise.
 function ut_area2d(poly) = let(n = len(poly)) 0.5 * _ut_area_sum(poly, n, 0);
