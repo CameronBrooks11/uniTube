@@ -119,8 +119,45 @@ warnings:
     done
     exit $fail
 
+# PREVIEW must not lie. F5 is the mode this library is used in, and OpenCSG
+# renders difference() by depth-peeling the framebuffer rather than computing
+# geometry -- so a hollow assembly can display as a solid slug while every
+# CGAL-based gate is green. Nothing here looked at preview until 2026-08-21.
+#
+# The signal needs no tuning: a closed part viewed from outside shows NO back
+# faces. Measured on examples/08 before the fix: 79.3% back faces. After: 0.0%.
+# There is nothing in between to threshold against. See tools/preview_backfaces.py.
+preview:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    mkdir -p "{{OUT}}/preview"
+    export QT_QPA_PLATFORM=offscreen
+    py=python3
+    if ! python3 -c 'import PIL' >/dev/null 2>&1; then
+      command -v uvx >/dev/null || { echo "  preview needs Pillow or uvx -- NOT skipping, a skip here reads as a pass"; exit 1; }
+      py="uvx --with pillow python3"
+    fi
+    fail=0
+    for f in examples/*.scad; do
+      b=$(basename "${f%.scad}")
+      png="{{OUT}}/preview/$b.png"
+      # NO --render: this is the OpenCSG preview path, deliberately.
+      openscad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
+      [ -s "$png" ] || { echo "  FAIL $b  (no preview image produced -- no GL?)"; fail=1; continue; }
+      # An example that deliberately exposes an interior declares it in the file.
+      if grep -q 'preview-exposes-interior' "$f"; then limit=100; else limit=2; fi
+      pct=$($py tools/preview_backfaces.py "$png")
+      if awk -v p="$pct" -v l="$limit" 'BEGIN{exit !(p>l)}'; then
+        echo "  FAIL $b  ${pct}% of the model is BACK faces -- preview is showing the subtracted bore"; fail=1
+      else
+        echo "  ok  $b  ${pct}%"
+      fi
+    done
+    [ $fail -eq 0 ] && echo "preview ok"
+    exit $fail
+
 # CI equivalent: formatting + rules + every example and test renders warning-free.
-check: fmt-check lint guards warnings
+check: fmt-check lint guards warnings preview
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p "{{OUT}}/check"

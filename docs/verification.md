@@ -40,13 +40,45 @@ and neither is visible from a green build:
    validated in preview, so "renders clean" is not evidence of a valid solid.
    Plus this library's own `ut_volume()`, which agrees with analytic values to 6
    significant figures, so volume bands can be tight. `just cgal`.
-5. **Declared engineering intent** — `checks/`, verified with
+5. **Preview correctness** — `just preview`. Renders each example through
+   **OpenCSG**, not CGAL, and fails if a closed part shows back faces. See below.
+6. **Declared engineering intent** — `checks/`, verified with
    [partspec](https://github.com/CameronBrooks11/partspec). A dev-time oracle;
    uniTube itself still links to nothing. `just partspec`.
 
 **Golden STL hashes were considered and rejected.** They are brittle to facet
 order, floating point, and any `$fa`/`$fs` change, and they train people to
 ignore the suite.
+
+## Preview is not geometry, and it can lie on its own
+
+Every tier above except `just preview` evaluates geometry with CGAL. **F5 preview
+does not.** OpenCSG renders `difference()` by depth-peeling the framebuffer, and
+when a model's depth complexity exceeds what it peels, it paints the *subtracted*
+solid's back faces over the shell.
+
+This is not cosmetic. Measured on `examples/08_coaxial_jacket` before
+`ut_assemble()` wrapped its CSG in `render()`:
+
+| | |
+|---|---|
+| model pixels that were the subtracted bore's back faces | **79.3%** |
+| what it looked like | a solid green slug — no bore, no liner, no annulus |
+| STL exported from that state | 9688 triangles, 4291 of them duplicates, **3429 non-manifold edges**, signed volume **−174446** — larger than the bounding box, and negative |
+| what every CGAL gate said | `Simple: yes`, `Volumes: 3`, 19/19 partspec assertions passing |
+
+The exported mesh still contained the **fan-cap centre vertices at `r=0`**, which
+a real `difference()` removes. That is the fingerprint: preview geometry is the
+un-subtracted operands, so an export taken from preview is not the part.
+
+`polyhedron(convexity=)` does **not** fix it — verified identical at 10, 20 and
+40. `render()` does, by evaluating the CSG instead of faking it.
+
+The gate needs no tuning, because the signal is binary. OpenSCAD's Cornfield
+scheme paints back faces green and front faces yellow, and **a closed part viewed
+from outside shows no back faces at all**: 79.3% before, 0.0% after. An example
+that exposes an interior on purpose — a cutaway — declares
+`preview-exposes-interior` in the file.
 
 ## `Simple: yes` is necessary and nowhere near sufficient
 
@@ -56,7 +88,9 @@ Every silent failure this design has been reviewed against passed it:
 - a coaxial liner deleted entirely — 26% of the material gone,
 - a tube swept through a bend tighter than its own radius, passing through
   itself — `Simple: yes, Volumes: 2` and a plausible positive volume,
-- a junction rendering as separate solids held together by a shared circle.
+- a junction rendering as separate solids held together by a shared circle,
+- and an assembly that displayed as a solid slug in the mode the library is
+  actually used in, while exporting a mesh with 3429 non-manifold edges.
 
 A self-intersecting run logs **both** `CGAL ERROR: assertion violation!` and
 `Simple: yes`, and `openscad` exits 0 — so `just cgal` greps for the error text
