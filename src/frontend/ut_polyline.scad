@@ -66,7 +66,7 @@ function _ut_defl(d1, d2, k, pts, r, n) = let(a = ut_turn(d1, d2))
 // genus 1 and at [80,80] on a 100 mm leg renders GENUS 2 -- an extra through-hole
 // -- with zero diagnostics, because OpenSCAD emits nothing for a non-positive
 // extrusion height. ERROR, never "scale to fit": on a doubleback that rule
-// scales the radius to exactly 0, which is itself NaN. See PLAN.md §9.5.
+// scales the radius to exactly 0, which is itself NaN. See docs/frontends.md.
 function _ut_fits(lens, insets, i, pts,
                   r) = i >= len(lens)
                            ? true

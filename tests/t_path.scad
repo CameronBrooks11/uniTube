@@ -1,11 +1,11 @@
 // t_path — the spine IR and the frame compiler. Pure data: nothing renders.
-// This whole file is only possible because the IR is data (PLAN.md §6 tier 1).
+// This whole file is only possible because the IR is data (docs/verification.md).
 
 // clang-format off
 use <../src/uniTube.scad>;
 // clang-format on
 
-// ============================================ the worked 90-degree elbow (PLAN.md §2.2)
+// ============================================ the worked 90-degree elbow (docs/ir.md)
 c = [ 35, 15, 0 ];
 u = [ 0, -1, 0 ];
 v = [ 1, 0, 0 ];

@@ -27,7 +27,7 @@ never got there.
 Because the lumen is an inner boundary of the *swept region*, the bore is the
 same spine, the same stations and the same frame with a different region. Free.
 
-## Winding — a deliberate deviation from PLAN.md §3
+## Winding — a deliberate deviation from the original design sketch
 
 Both loops are stored **counter-clockwise**, not outer-CCW / inner-CW.
 

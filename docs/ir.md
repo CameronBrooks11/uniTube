@@ -107,7 +107,7 @@ resolution knobs are inert on the result:
 
 This is recorded rather than fixed. Closing it means fitting arcs to the samples
 — see `spikes/biarc_fitter.scad`, which exists and works — and that is deferred
-(`BACKLOG.md` §3). Resolution independence is the one argument that genuinely
+(issue #17). Resolution independence is the one argument that genuinely
 justifies building it; the arclength and transport arguments do not survive
 measurement.
 

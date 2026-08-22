@@ -1,4 +1,4 @@
-// 01_elbow — the worked example from PLAN.md §2.2.
+// 01_elbow — the worked example from docs/ir.md.
 //
 // A 90-degree hollow elbow: three spine segments, one polyhedron, no CSG.
 // render() forces CGAL, so `just verify` has a report to read; a raw

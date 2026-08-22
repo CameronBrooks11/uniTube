@@ -12,7 +12,7 @@
 //
 // NO MODULE EVER EMITS A FINISHED HOLLOW TUBE DURING ASSEMBLY (AGENTS.md rule 5).
 //
-// WINDING CONVENTION — deviates from PLAN.md §3 deliberately. Both loops are
+// WINDING CONVENTION — deviates from the original design sketch deliberately. Both loops are
 // stored COUNTER-CLOCKWISE, not outer-CCW/inner-CW. Reversing the inner loop
 // would destroy the index correspondence that PROF-2 requires, and the bore
 // would no longer be a directly usable positive solid. The mesh emitter orients

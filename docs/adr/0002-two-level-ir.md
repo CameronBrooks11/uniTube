@@ -56,7 +56,7 @@ spine layer** in favour of a bare station list. Do not defend it.
 
 ## Falsification result (Phase 4)
 
-The test was stated in advance, in this ADR and in `PLAN.md` §7: if the turtle
+The test was stated in advance, in this ADR and in the phase plan: if the turtle
 frontend did not fall out of the spine cleanly — if the spine had to grow a case,
 or the turtle reimplemented any frame or tessellation logic — **the spine layer
 would be deleted in favour of a bare station list, not defended.**
@@ -96,5 +96,5 @@ spine, and `$fa`/`$fs` are inert on the result (measured: 161 stations at both
 
 `docs/ir.md` now states this as a limit rather than claiming the invariant. The
 fix is a biarc fitter, which exists as a working prototype in
-`spikes/biarc_fitter.scad` and is deliberately not built — see `BACKLOG.md` §3
+`spikes/biarc_fitter.scad` and is deliberately not built — see issue #17
 for the measurements that demoted it.

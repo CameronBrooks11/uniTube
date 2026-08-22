@@ -13,6 +13,7 @@ it. This directory is the reference.
 | [`frontends.md`](frontends.md) | The four ways to describe a path, how to choose one, and the measured cost of a sampled path. |
 | [`frames.md`](frames.md) | Roll: transport versus fixed, the vertical-tangent degeneracy, and the historical `pipeOrientate` derivation. |
 | [`salvage.md`](salvage.md) | What the pre-2026 implementation got right, recorded as understanding rather than code. |
+| [`verification.md`](verification.md) | What "check" and "test" mean for CAD: OpenSCAD's real exit codes, the gate tiers, and why `Simple: yes` proves almost nothing. |
 
 ## The decisions
 
@@ -29,10 +30,12 @@ and — where it matters — what was measured.
 | [0006](adr/0006-profile-correspondence.md) | Profile loops must be correspondence-aligned |
 | [0007](adr/0007-open-annulus.md) | A C-section is an open annulus, not one closed loop |
 
-## Planning
+## What is next
 
-- [`../PLAN.md`](../PLAN.md) — the architecture and the phase record.
-- [`../BACKLOG.md`](../BACKLOG.md) — what is next, and what is deliberately not.
+Outstanding work, and work deliberately not being done, is tracked in
+[GitHub issues](https://github.com/CameronBrooks11/uniTube/issues) rather than in
+a file in the repository. Each deferred item carries the reasoning and the
+measurements that led to deferring it.
 
 ## A note on how to read these
 

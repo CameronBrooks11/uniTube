@@ -1,7 +1,9 @@
 # uniTube — project rules
 
 These take precedence over the global rules where they conflict.
-The full architecture and the reasoning behind it is in `PLAN.md`.
+The architecture and the reasoning behind it is in `docs/`; the decisions are
+in `docs/adr/`. Outstanding and deliberately-deferred work is tracked in GitHub
+issues, not in a file.
 
 ## What this library is
 
@@ -12,7 +14,7 @@ hollow runs join without sealing each other's bores.
 **This library stays the tube path.** Terminations — threads, barbs, clamps,
 solvent sockets, bayonets — are explicitly out of scope and will live in a
 separate repository consuming only `src/ut_port.scad`'s record. Do not add them
-here. See `PLAN.md` §10.
+here. See ADR 0005 and issue #19.
 
 ## Hard rules
 

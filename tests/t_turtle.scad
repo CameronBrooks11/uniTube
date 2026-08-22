@@ -1,4 +1,4 @@
-// t_turtle — THE FALSIFICATION TEST for the two-level IR (ADR 0002, PLAN.md §7).
+// t_turtle — THE FALSIFICATION TEST for the two-level IR (ADR 0002).
 //
 // The rule, stated in advance: if the turtle does not fall out of the spine
 // cleanly -- if the spine has to grow a case, or the turtle reimplements any

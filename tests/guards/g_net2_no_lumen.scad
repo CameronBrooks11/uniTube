@@ -1,4 +1,4 @@
-// MUST FAIL — NET-2, LUMEN PATENCY. PLAN.md §6 calls this "the most important
+// MUST FAIL — NET-2, LUMEN PATENCY. docs/verification.md calls this "the most important
 // test in the library, because it is the only one that catches the failure the
 // project exists to fix" -- and it had no negative test at all until now.
 // A solid rod has no lumen, so there is nothing for the joint's core sphere to

@@ -1,9 +1,9 @@
 // SPIKE — biarc fitter prototype. NOT PART OF THE LIBRARY.
 //
-// Preserved deliberately (BACKLOG.md §3, decision 4). Nothing under src/ imports
+// Preserved deliberately (issue #17). Nothing under src/ imports
 // it, `just check` does not render it, and it is not on any release path.
 //
-// WHY IT IS NOT BUILT: PLAN.md §10 called biarc fitting "the single highest-value
+// WHY IT IS NOT BUILT: the original plan called biarc fitting "the single highest-value
 // deferred item" on the grounds that a sampled P segment forfeits exact
 // arclength, exact transport and CHECK-1. Measured, that billing is wrong:
 //

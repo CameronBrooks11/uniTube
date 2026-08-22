@@ -17,7 +17,7 @@
 //     inert here. This is the real cost, and it is a stated limit on SPINE-5.
 // A biarc fitter would close the last of those and only tighten the first three.
 // It exists and works (spikes/biarc_fitter.scad) and is deliberately not built:
-// BACKLOG.md §3 has the measurements.
+// Issue #17 has the measurements.
 
 // clang-format off
 use <../ut_core.scad>;
