@@ -55,14 +55,25 @@ assert(min([for (f = fcs) len(f)]) == 3, "every face is a triangle");
 
 // --- the seam does not spiral over bends in DIFFERENT planes -----------------
 // This is the exit criterion, and the case half_curvedPipe.scad was built for.
-bendy = ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ], [ 60, 40, 0 ], [ 60, 40, 40 ] ], r = 20);
+//
+// The final leg CLIMBS AT 37 DEGREES rather than running straight up, and that
+// matters. This test used to finish vertical and then assert only that the
+// frame was not NaN there. It is not NaN -- ut_ref_fallback swaps UP for BACK --
+// but that swap is a discontinuity, and the seam jumped 174 degrees in one
+// 6-degree step while this assert passed. "Not NaN" was never the requirement;
+// continuity is, and STATION-6 now enforces it in ut_stations().
+bendy = ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ], [ 60, 40, 0 ], [ 100, 40, 30 ] ], r = 18);
 fx = ut_stations(bendy, [ [ "frame", "fixed" ], [ "normal", [ 0, 0, 1 ] ] ]);
 horiz = [for (s = fx) if (abs(ut_st_t(s)[2]) < 1e-9) s];
 assert(len(horiz) > 4, "expected many horizontal stations across two bends");
 assert(max([for (s = horiz) norm(ut_st_n(s) - [ 0, 0, 1 ])]) < 1e-9,
        "the gap must face EXACTLY world-up on every horizontal station -- no spiral");
-// And nothing goes NaN on the vertical final leg, where UP is degenerate.
-nv = ut_st_n(fx[len(fx) - 1]);
-assert(is_num(nv[0]) && is_num(nv[1]) && is_num(nv[2]), "vertical leg must not produce NaN");
+// The seam is continuous across BOTH bends, including the one that climbs.
+assert(max([for (i = [1:len(fx) - 1]) ut_turn(ut_st_n(fx[i]), ut_st_n(fx[i - 1])) -
+            ut_turn(ut_st_t(fx[i]), ut_st_t(fx[i - 1]))]) < 1e-9,
+       "STATION-6: the seam never outruns the axis, so a C-section stays a C-section");
+// Every frame is real. Counting is the only way to see this -- max() drops nan.
+assert(len([for (s = fx) if (!is_num(ut_st_n(s)[0]) || !is_num(ut_st_n(s)[1]) || !is_num(ut_st_n(s)[2])) 1]) == 0,
+       "no station frame may contain nan");
 
 cube(0.001); // sentinel
