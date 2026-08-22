@@ -207,7 +207,14 @@ function _ut_seg_at(seg, s) = seg[0] == "L" ? let(d = ut_unit(seg[2] - seg[1]))[
                                         a = ang * x)[c + r * (cos(a) * u + sin(a) * v), -sin(a) * u + cos(a) * v]
                                   : _ut_chain_at(seg[1], seg[2], 0, s);
 
-function _ut_chain_at(p, t, i,
-                      s) = let(L = norm(p[i + 1] - p[i]))(i >= len(p) - 2 || s <= L + ut_eps())
-                               ? [ p[i] + min(s, L) * ut_unit(p[i + 1] - p[i]), ut_unit(t[min(i + 1, len(t) - 1)]) ]
-                               : _ut_chain_at(p, t, i + 1, s - L);
+// The tangent is INTERPOLATED along the chord, so it is exactly the stored
+// tangent at each sample and continuous in between. It used to be t[i+1] --
+// the far end of the chord -- for every s, which made ut_at(path, 0) return the
+// tangent one sample downstream: measured 8.94 degrees out at the start of an
+// n=40 helix, exactly one sample's rotation. L and A segments are exact; this is
+// the best a sampled segment can do without re-deriving the source curve.
+function _ut_chain_at(p, t, i, s) =
+    let(L = norm(p[i + 1] - p[i]))(i >= len(p) - 2 || s <= L + ut_eps())
+        ? let(x = L > ut_eps() ? min(max(s / L, 0), 1)
+                               : 0)[p[i] + min(s, L) * ut_unit(p[i + 1] - p[i]), ut_unit(t[i] * (1 - x) + t[i + 1] * x)]
+        : _ut_chain_at(p, t, i + 1, s - L);
