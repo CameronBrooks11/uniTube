@@ -165,8 +165,42 @@ Seeding projects a world reference orthogonal to the tangent. When the run start
 zero and normalising it gives `[nan,nan,nan]` for every station on that leg.
 
 `ut_ref_fallback()` falls back from `UP` to `BACK`, and from `BACK` to `+X`, when
-`|cross(t, ref)| < 1e-6`. Three lines. Asserted in `tests/t_frame.scad` and
-`tests/t_split.scad`, both of which end on a vertical leg on purpose.
+`|cross(t, ref)| < 1e-6`. Three lines.
+
+### The fallback is a SEED, and using it per-station made it a discontinuity
+
+That fallback is correct for what it was written for: choosing a starting
+reference **once**, at station 0, for a transport frame. Used once there is no
+discontinuity to create.
+
+`frame="fixed"` derived every station's normal independently, so the fallback
+became a **hard switch in the middle of a run**. Measured on the old
+`examples/05`: as the conduit turned to vertical the seam jumped **174° in a
+single 6° step**. The mesh stayed manifold, CGAL reported `Simple: yes`, `just
+check`, `just cgal` and all 19 partspec assertions passed, and the C-section was
+simply wrong from that station on.
+
+The projection is smooth to 1e-13 at every approach angle **down to 1° from the
+axis** and only breaks *at* it — a cliff, not gradual ill-conditioning. So
+`ut_stations()` now refuses the genuinely undefined ask rather than substituting
+a different reference for it: a vertical pipe has no upward-facing side.
+
+### Three tests asserted the wrong property
+
+`tests/t_frame.scad` and `tests/t_split.scad` both ended on a vertical leg *on
+purpose*, and both asserted that the result was **not NaN**. It is not NaN — the
+fallback guarantees that. Finiteness was never the requirement; **continuity**
+is, and nothing checked it. `STATION-6` was documented from Phase 1 and enforced
+by nothing.
+
+The third was worse. A caller-supplied `frame=<list>` parallel to the tangent
+*does* produce `[nan,nan,nan]`, and the assert written to catch it —
+`max([for (s = sts) abs(t * n)]) < 1e-9` — **passed**, reporting `2.22e-16`,
+because OpenSCAD's `max()` silently drops `nan` entries. Never test a frame for
+validity with `max()` alone; count the bad stations instead.
+
+All three are now refused at the cause, and each refusal has a guard in
+`tests/guards/` that is watched to fire.
 
 Every angle in the frame path is computed as `atan2(norm(cross(a,b)), a*b)`.
 **Never `acos`** — `acos(1.0000001)` is `nan` on 2021.01, and near-collinear

@@ -75,6 +75,11 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
   `x == x` (false for nan only). The two distinguish the failure modes this
   library cares about: `acos` past 1.0 gives nan, `tan(90)` gives inf.
 - **`cross()` requires 3-vectors.** For a planar angle use `atan2(y, x)`.
+- **`max()` and `min()` SILENTLY DROP `nan`.** `max([1e-16, nan])` is `1e-16`,
+  not `nan`. So `assert(max([...]) < eps)` is blind to exactly the failure it is
+  usually written to catch — this let a station frame of `[nan,nan,nan]` pass the
+  one assert guarding frame validity. Count offenders instead:
+  `assert(len([for (x = v) if (!is_num(x)) 1]) == 0, ...)`.
 - **A descending range is SILENTLY REVERSED.** `[0:-1]` evaluates to `[-1, 0]`,
   not to an empty list, and `--hardwarnings` says nothing. Any `[for (k = [0:i-1])
   ...]` prefix slice must be guarded with `i == 0 ? [] : ...`, and any
