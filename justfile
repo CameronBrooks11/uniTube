@@ -134,10 +134,12 @@ preview:
     # OpenCSG needs a real GL context. QT_QPA_PLATFORM=offscreen has none and
     # OpenSCAD SEGFAULTS -- which is why every other recipe here can stay
     # headless and this one cannot. Under a bare CI runner, borrow one.
+    # A FUNCTION, not a string: "--server-args=-screen 0 1024x768x24" contains
+    # spaces, and an unquoted $RUN word-splits it so xvfb-run tries to exec "0".
     if [ -n "${DISPLAY:-}" ]; then
-      RUN=""
+      run_scad() { openscad "$@"; }
     elif command -v xvfb-run >/dev/null; then
-      RUN="xvfb-run -a --server-args=-screen 0 1024x768x24"
+      run_scad() { xvfb-run -a --server-args="-screen 0 1024x768x24" openscad "$@"; }
     else
       echo "  preview needs a GL context (a DISPLAY, or xvfb-run) -- NOT skipping, a skip here reads as a pass"; exit 1
     fi
@@ -150,8 +152,12 @@ preview:
     for f in examples/*.scad; do
       b=$(basename "${f%.scad}")
       png="{{OUT}}/preview/$b.png"
+      # DELETE FIRST. Without this the check reads a STALE png from a previous
+      # run when the render fails, and reports ok -- which is how this recipe
+      # passed locally while segfaulting in CI.
+      rm -f "$png"
       # NO --render: this is the OpenCSG preview path, deliberately.
-      $RUN openscad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
+      run_scad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
       [ -s "$png" ] || { echo "  FAIL $b  (no preview image produced -- no GL?)"; fail=1; continue; }
       # An example that deliberately exposes an interior declares it in the file.
       if grep -q 'preview-exposes-interior' "$f"; then limit=100; else limit=2; fi
