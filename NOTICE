@@ -1,9 +1,15 @@
 uniTube — attribution and provenance
 ====================================
 
-uniTube itself (everything under src/, examples/, tests/) is BSD-2-Clause,
-Copyright (c) 2026 Cameron Brooks. It has NO third-party dependencies and links
-to nothing.
+uniTube itself is BSD-2-Clause, Copyright (c) 2026 Cameron Brooks. That covers
+everything under src/, examples/, tests/, tools/, checks/, docs/ and spikes/,
+plus the build files at the root. It has NO third-party dependencies and links
+to nothing, so USING uniTube carries no obligation beyond BSD-2-Clause.
+
+The only third-party code in this repository is under reference/, which no part
+of uniTube imports, links to, or is derived from. It is present as prior art and
+is MERELY AGGREGATED here in the sense of GPLv3 section 5 -- separate works, on a
+shared volume, not a combined work. Their licences are below.
 
 Everything under reference/ is READ-ONLY QUARANTINE. It is retained as prior
 art, as a requirements checklist, and as the historical record of what this
@@ -26,9 +32,11 @@ reference/axford/            CC-BY (version unspecified)
 
 reference/gringer/           GPLv3
     path_extrude.scad, Copyright (C) 2014-2019 David Eccles (gringer).
+    Full licence text: reference/LICENSES/GPL-3.0.txt
 
 reference/doommeister/       GPLv3
     Round Duct/Pipework fittings Library, by "the DoomMeister".
+    Full licence text: reference/LICENSES/GPL-3.0.txt
 
 reference/makrokaba/         BSD-3-Clause
     Universal fitting adapter generator, Makrokaba, with modifications by
@@ -36,6 +44,17 @@ reference/makrokaba/         BSD-3-Clause
     requirements checklist for a future, separate terminations library.
 
 reference/proto/             owner-written experiments, no external code.
+
+reference/LICENSES/          the full text of every licence relied on above that
+    is not already reproduced in the files themselves. GPLv3 requires that a
+    copy of the licence accompany any verbatim redistribution, and these files
+    carry only the usual header pointing at gnu.org -- which is enough while a
+    file sits in someone's working tree and not enough once the repository is
+    tagged and downloaded. Added before v0.1.0 for exactly that reason.
+
+    reference/axford/ ships its own LICENSE.txt (CC-BY), and
+    reference/makrokaba/ reproduces BSD-3-Clause in full in each file header,
+    so neither needs a copy here.
 
 
 ⚠ COPYLEFT WARNING FOR CONTRIBUTORS
