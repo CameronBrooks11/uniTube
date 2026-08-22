@@ -46,13 +46,18 @@ m = floor(len(ae) / 2);
 assert(ut_turn(ut_st_t(ae[m]), ut_st_t(ac[m])) < 0.05,
        str("interior tangents should agree closely, got ", ut_turn(ut_st_t(ae[m]), ut_st_t(ac[m]))));
 
-// AT THE ENDS there is no centre to difference about, so the estimate is
-// one-sided and first-order: the error is about half a sample's rotation
-// (360*T/n/2 = 2.25 deg here). Measured 2.237.
-half_step = 360 * T / 160 / 2;
+// AT THE ENDS a two-point chord would be FIRST order -- its error is about half
+// a sample's rotation (2.24 deg at n=160 here). _ut_central uses a THREE-POINT
+// one-sided difference instead, which is second order like the interior.
+// Measured: 8.949 -> 0.460 at n=40, 2.237 -> 0.0141 at n=160.
 err0 = ut_turn(ut_st_t(ae[0]), ut_st_t(ac[0]));
-assert(err0 > 0.5 && err0 < half_step * 1.1,
-       str("the END tangent is the one-sided estimate, error ~", half_step, " deg, got ", err0));
+assert(err0 < 0.05, str("the END tangent must be second order too, got ", err0, " deg"));
+
+// And it really is second order: quartering n's step should quarter... quarter
+// the error. Compare n=80 against n=160 on the same curve.
+c80 = ut_stations(ut_curve(function(t)[R * cos(360 * T * t), R *sin(360 * T * t), RISE *T *t], n = 80));
+e80 = ut_turn(ut_st_t(c80[0]), ut_st_t(ae[0]));
+assert(e80 > err0 * 3, str("halving n should roughly quadruple the end error; got ", e80, " vs ", err0));
 
 // WHICH IS WHY dfdt MATTERS MOST FOR PORTS. STATION-3 wants exact terminal
 // tangents, and a port frame 2.2 degrees out is ~0.8 mm of gap across a 20 mm
