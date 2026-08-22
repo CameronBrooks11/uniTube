@@ -156,32 +156,93 @@ function _ut_transport(raw, i, prev,
 // Signed roll angle from a to b about axis t.
 function _ut_signed_roll(a, b, t) = atan2(cross(a, b) * ut_unit(t), a *b);
 
+// STATION-6 — continuous roll: the frame never flips. DOCUMENTED SINCE PHASE 1
+// AND NEVER CHECKED, which is how a 174-degree seam flip shipped in an example.
+//
+// The measure is the roll step IN EXCESS OF the tangent step at the same place.
+// Parallel transport turns the normal exactly as much as the tangent, so the
+// excess is 0 by construction; a fixed frame measures 0 to 1e-13 at every
+// approach angle down to 1 degree from its own reference axis. A flip measures
+// 84 to 174. There is no middle ground to tune a threshold against, so 45 is
+// chosen simply to sit in the empty gap between the two populations.
+//
+// This runs on the PRE-TWIST normals. `twist` is declared intent distributed by
+// arclength, and asking for it is not a flip.
+function _ut_st6(raw, norms, i) =
+    i >= len(norms)
+        ? true
+        : let(dn = ut_turn(norms[i], norms[i - 1]), dt = ut_turn(raw[i][1], raw[i - 1][1])) assert(
+              dn - dt < 45,
+              str("STATION-6 violated: the roll frame turns ", dn, " degrees between stations ", i - 1, " and ", i,
+                  " while the tangent turns only ", dt,
+                  " -- the seam has flipped. A profile with any feature that is not rotationally symmetric (a split, a keyway, a flat) is wrong from here on, and the mesh stays manifold, so nothing else catches it."))
+              _ut_st6(raw, norms, i + 1);
+
+// frame=<list> — a caller-supplied normal PARALLEL to the tangent has nothing
+// left after projection, and ut_ortho() returns [nan, nan, nan].
+//
+// This was silent, and it defeated the one test written to catch it: OpenSCAD's
+// max() DROPS nan entries, so `max([for (s = sts) abs(t * n)]) < 1e-9` reported
+// 2.22e-16 on a station list whose last frame was entirely nan. Never test a
+// frame for validity with max() alone.
+function _ut_list_ok(raw, pol, i) =
+    i >= len(raw)
+        ? true
+        : let(a = ut_turn(raw[i][1], pol[i]), off = min(a, 180 - a))
+              assert(off > 0.5,
+                     str("frame=<list>: the normal supplied for station ", i, " is ", pol[i], ", which is ", off,
+                         " degrees from that station's tangent ", raw[i][1],
+                         ". Projecting it orthogonal to the tangent leaves nothing, and the frame becomes nan."))
+                  _ut_list_ok(raw, pol, i + 1);
+
+// frame="fixed" pins the seam to a WORLD direction, which is undefined wherever
+// the axis points along that direction: a vertical pipe has no upward-facing
+// side. ut_ref_fallback() then silently substitutes a different reference vector
+// -- correct as a one-off SEED for transport, a discontinuity when applied per
+// station. Measured on examples/05: the run turned to vertical and the seam
+// jumped 174 degrees in a single 6-degree step.
+//
+// The projection is smooth to 1e-13 right down to 1 degree from the axis and
+// only breaks AT it, so this refuses a genuinely undefined ask rather than a
+// merely awkward one.
+function _ut_fixed_ok(raw, ref, i) =
+    i >= len(raw)
+        ? true
+        : let(a = ut_turn(raw[i][1], ref), off = min(a, 180 - a)) assert(
+              off > 0.5,
+              str("frame=\"fixed\": at station ", i, " the axis is ", off, " degrees from the fixed normal ", ref,
+                  ", where a world-pinned seam has no defined direction -- a vertical pipe has no upward-facing side. Use frame=\"transport\", or choose a normal the run never runs parallel to."))
+              _ut_fixed_ok(raw, ref, i + 1);
+
 // THE one compiler function: spine -> stations.
-function ut_stations(path, opts = []) =
-    let(segs = ut_segs(path), closed = ut_closed(path), po = ut_popts(path), o = concat(opts, po), // caller's opts win
-        raw = _ut_gather(segs, 0, 0, []), N = len(raw), policy = ut_opt(o, "frame", "transport"),
-        ref = ut_opt(o, "normal", ut_up()), twist = ut_opt(o, "twist", 0), sym = ut_opt(o, "symmetry", 0),
-        n0 = ut_ref_fallback(raw[0][1], is_list(policy) ? ut_up() : ref),
+function ut_stations(path, opts = []) = let(
+    segs = ut_segs(path), closed = ut_closed(path), po = ut_popts(path), o = concat(opts, po), // caller's opts win
+    raw = _ut_gather(segs, 0, 0, []), N = len(raw), policy = ut_opt(o, "frame", "transport"),
+    ref = ut_opt(o, "normal", ut_up()), twist = ut_opt(o, "twist", 0), sym = ut_opt(o, "symmetry", 0),
+    n0 = ut_ref_fallback(raw[0][1], is_list(policy) ? ut_up() : ref),
 
-        // --- roll policy ---
-        norms = is_list(policy)     ? [for (i = [0:N - 1]) ut_ortho(raw[i][1], policy[i])]
-                : policy == "fixed" ? [for (i = [0:N - 1]) ut_ref_fallback(raw[i][1], ref)]
-                                    : _ut_transport(raw, 1, n0, [n0]),
+    // --- roll policy ---
+    norms = is_list(policy)
+                ? assert(_ut_list_ok(raw, policy, 0), "unreachable")[for (i = [0:N - 1]) ut_ortho(raw[i][1], policy[i])]
+            : policy == "fixed" ? assert(_ut_fixed_ok(raw, ut_unit(ref), 0),
+                                         "unreachable")[for (i = [0:N - 1]) ut_ref_fallback(raw[i][1], ref)]
+                                : _ut_transport(raw, 1, n0, [n0]),
 
-        // --- closed-loop holonomy, absorbed and distributed (path_extrude gets
-        //     this off by one and leaves a permanent 0.75 deg seam residual) ---
-        sLast = raw[N - 1][4],
-        hol = (closed && policy == "transport")
-                  ? let(h = _ut_signed_roll(norms[N - 1], n0, raw[N - 1][1]), step = sym > 0 ? 360 / sym : 360) h -
-                        round(h / step) * step
-                  : 0,
-        extra = twist + hol,
-        // STATION-7 — a CLOSED station list carries NO duplicated terminal
-        // station. The last raw sample coincides with the first by construction.
-        // It must survive long enough to measure the loop holonomy above, but it
-        // must not reach the backend: the wrap ring would stitch a station to
-        // itself. Measured before this: 88 degenerate triangles out of 2904.
-        last = closed ? N - 2 : N - 1)[for (i = [0:last]) let(
+    // --- closed-loop holonomy, absorbed and distributed (path_extrude gets
+    //     this off by one and leaves a permanent 0.75 deg seam residual) ---
+    sLast = raw[N - 1][4],
+    hol = (closed && policy == "transport")
+              ? let(h = _ut_signed_roll(norms[N - 1], n0, raw[N - 1][1]), step = sym > 0 ? 360 / sym : 360) h -
+                    round(h / step) * step
+              : 0,
+    extra = twist + hol,
+    // STATION-7 — a CLOSED station list carries NO duplicated terminal
+    // station. The last raw sample coincides with the first by construction.
+    // It must survive long enough to measure the loop holonomy above, but it
+    // must not reach the backend: the wrap ring would stitch a station to
+    // itself. Measured before this: 88 degenerate triangles out of 2904.
+    last = closed ? N - 2 : N - 1)
+    assert(_ut_st6(raw, norms, 1), "unreachable")[for (i = [0:last]) let(
         a = sLast > ut_eps() ? extra * raw[i][4] / sLast
                              : 0)[raw[i][0], ut_unit(raw[i][1]),
                                   a == 0 ? norms[i] : ut_rotv(norms[i], a, ut_unit(raw[i][1])), raw[i][4]]];
