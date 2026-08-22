@@ -129,9 +129,9 @@ function _ut_joints_at(net, name, end) =
 
 // An open end is one incident to NO joint. Ports are DERIVED FROM GRAPH DEGREE,
 // never declared -- so "which ends are open?" is a computed fact.
-function ut_ports(net) = [for (r = ut_net_runs(net),
-                               end = [ "a", "b" ]) if (len(_ut_joints_at(net, ut_run_name(r), end)) == 0)
-        let(st = _ut_end_station(r, end), path = ut_run_path(r))
+function ut_ports(net, opts = []) = [for (r = ut_net_runs(net),
+                                          end = [ "a", "b" ]) if (len(_ut_joints_at(net, ut_run_name(r), end)) == 0)
+        let(st = _ut_end_station(r, end, concat(opts, ut_run_opts(r))), path = ut_run_path(r))
             ut_port(str(ut_run_name(r), ".", end), ut_st_p(st), end == "a" ? -ut_st_t(st) : ut_st_t(st), ut_st_n(st),
                     ut_run_prof(r), end == "a" ? 0 : ut_length(path))];
 
@@ -284,4 +284,29 @@ function _ut_nests(a, b) = let(ra = ut_bore_inradius(ut_run_prof(a)), rb = ut_pr
 function _ut_ends(r) = let(p = ut_run_path(r))[ut_at(p, 0)[0], ut_at(p, ut_length(p))[0]];
 
 // Validate a network. Returns true so it can sit in an assert.
-function ut_check_net(net) = _ut_net1(net) && _ut_net2(net) && _ut_net3(net) && _ut_net4(net) && _ut_net5(net);
+// NET-0 — every RUN in the network gets the same analytic check a standalone
+// run gets. ut_tube() has always called ut_check(); ut_assemble() did not, so
+// CHECK-1 did not exist for the network layer at all -- which is the flagship
+// capability. Measured: od=12 through an r=5.5 bend aborts via ut_tube and
+// renders "Simple: yes" via ut_assemble.
+function _ut_net0(net, i = 0) = let(rs = ut_net_runs(net)) i >= len(rs)
+                                    ? true
+                                    : ut_check(ut_run_path(rs[i]), ut_run_prof(rs[i])) && _ut_net0(net, i + 1);
+
+// NET-6 — every run incident to a joint must share ONE lumen group. The joint's
+// core sphere is cut in one group only, so a joint spanning two groups leaves
+// material across the junction: measured +178.9 mm3 (+3.6%) on a two-run elbow,
+// with ut_check_net returning true. Groups are the user's job by design, so a
+// mis-declared group is the EXPECTED user error, and NET-5 already guards the
+// opposite mistake.
+function _ut_net6(net) = let(bad = [for (j = ut_net_joints(net))
+                                     let(gs = _ut_uniq([for (e = ut_joint_incident(j))
+                                                 ut_run_group(ut_net_run(net, e[0]))])) if (len(gs) > 1)
+                                         str("joint at ", ut_joint_node(net, j), " spans lumen groups ", gs)])
+    assert(
+        len(bad) == 0,
+        str("NET-6 (joint spans lumen groups): ", bad,
+            ". Every run meeting at a joint must share one group, or the joint's core sphere is subtracted in one group only and leaves material across the junction.")) true;
+
+function ut_check_net(net) = _ut_net0(net) && _ut_net1(net) && _ut_net2(net) && _ut_net3(net) && _ut_net4(net) &&
+                             _ut_net5(net) && _ut_net6(net);
