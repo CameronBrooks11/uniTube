@@ -6,10 +6,13 @@ A **path compiler and a hollow-network assembler**: many ways to describe a tube
 centreline, all compiled down to one canonical form, swept as a single polyhedron,
 and assembled into branching networks whose bores stay open.
 
-> **Status: under reconstruction.** The library is being rewritten from the
-> ground up. See [`PLAN.md`](PLAN.md) for the architecture and the phase plan.
-> The previous implementation is in [`reference/axford/`](reference/) and does
-> not currently render its bends.
+> **Status: v1 core complete — path, profile, and network.** Four frontends
+> compile to one canonical spine, sweep as a single polyhedron, and assemble into
+> branching hollow networks whose bores stay open. See [`PLAN.md`](PLAN.md) for
+> the architecture and [`BACKLOG.md`](BACKLOG.md) for what is next.
+>
+> Not yet shipped, deliberately: terminations (a separate library), junction
+> fillets, profile variation. Not yet tagged.
 
 ## Why
 
@@ -23,6 +26,27 @@ parts that are specific to tubes:
 - **branching networks** where several hollow runs meet without sealing each
   other's bores,
 - **ports** as data, so terminations can be a separate library.
+
+## What it looks like
+
+```scad
+use <uniTube/src/uniTube.scad>;
+
+// waypoints and fillet radii
+ut_tube(ut_polyline([[0,0,0], [50,0,0], [50,50,0]], r = 15),
+        ut_round(od = 12, wall = 2));
+
+// or a bender program -- feed, bend, roll
+ut_tube(ut_turtle([["feed",60], ["bend",90,"r",24], ["roll",90], ["bend",45,"r",24]]),
+        ut_round(id = 8, wall = 2));
+
+// or a branching network whose lumens stay open
+ut_assemble(ut_net([trunk, branch],
+                   [ut_joint([["trunk", ["s", 50]], ["branch", "a"]])]));
+```
+
+See [`examples/`](examples/) — an elbow, a split conduit, a helix, a square bore,
+a 4-into-1 manifold, a coaxial jacket, a wall-landing tee.
 
 ## Requirements
 
