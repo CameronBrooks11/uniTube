@@ -62,6 +62,23 @@ assert(len(arcs) == 2, str("a 270 degree bend splits into 2 arcs, got ", len(arc
 assert(max([for (s = arcs) s[5]]) <= 180 + 1e-9, "and neither exceeds 180");
 assert(abs(ut_length(coil) - (10 + (270 / 360) * 2 * PI * 20 + 10)) < 1e-9, "the split preserves total length");
 
+// The split rebuilds the command list around the bend, and BOTH slices used to
+// be unguarded. OpenSCAD silently reverses a descending range -- [0:-1] is
+// [-1, 0] -- so a >180 bend as the FIRST or LAST command spliced garbage into
+// the program and aborted with `unknown command "undef"`, naming the wrong
+// cause. Neither boundary was covered: the case above has commands on both sides.
+first = ut_turtle([ [ "bend", 270, "r", 30 ], [ "feed", 20 ] ]);
+assert(abs(ut_length(first) - ((270 / 360) * 2 * PI * 30 + 20)) < 1e-9,
+       "a >180 bend as the FIRST command splits correctly");
+last = ut_turtle([ [ "feed", 20 ], [ "bend", 270, "r", 30 ] ]);
+assert(abs(ut_length(last) - (20 + (270 / 360) * 2 * PI * 30)) < 1e-9,
+       "a >180 bend as the LAST command splits correctly");
+// Repeated halving: 400 degrees needs two rounds, because 200 is still over 180.
+big = ut_turtle([[ "bend", 400, "r", 40 ]]);
+bigarcs = [for (s = ut_segs(big)) if (ut_seg_kind(s) == "A") s];
+assert(len(bigarcs) == 4, str("400 degrees halves twice, into 4 arcs, got ", len(bigarcs)));
+assert(abs(ut_length(big) - (400 / 360) * 2 * PI * 40) < 1e-9, "and still preserves total length");
+
 // ============================================ negative bends go the other way
 down = ut_turtle([ [ "feed", 20 ], [ "bend", -90, "r", 15 ], [ "feed", 20 ] ]);
 dsts = ut_stations(down);
