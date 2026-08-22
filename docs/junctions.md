@@ -72,16 +72,28 @@ CGAL still reporting `Simple: yes`.
 `NET-5` refuses an assembly where two runs that can nest share a group, and names
 the fix.
 
-> **`NET-5` has a measured blind spot, and it is not small.** The test compares
-> ENDPOINTS only. Slide a liner 70 mm along a jacket so they share no endpoint and
-> it is invisible: measured, **3733.3 mm³ lost — exactly 100% of the liner, 9.6%
-> of the assembly** — with `ut_check_net` returning `true` and CGAL reporting
-> `Simple: yes`. Declare the group correctly; the check will not save you here.
->
-> The obvious fix — sample both paths and compare distances — **false-positives
-> on every tee**, because two runs meeting at a joint necessarily approach within
-> a bore radius. That is what a joint *is*. A correct version has to exempt pairs
-> sharing a joint, and that is deferred rather than guessed at (`BACKLOG.md` §4).
+`NET-5` compares the two centrelines by **sampled path distance**, not by
+endpoints. It was an endpoint test until 2026-08-21, and that miss was total:
+sliding a liner 70 mm along a jacket so the two shared no endpoint lost **3733.3
+mm³ — exactly 100% of the liner** — with `ut_check_net` returning `true` and CGAL
+reporting `Simple: yes`.
+
+**Runs that share a joint are exempt, and that exemption is not optional.** Two
+runs meeting at a joint necessarily approach within a bore radius — that is what
+a joint *is*. Without the exemption the check rejects a perfectly ordinary tee
+whose trunk bore is large enough to contain its branch; verified by removing it
+and watching exactly that case fail. Sharing a joint is the declaration that the
+approach is deliberate.
+
+Two limits worth knowing:
+
+- It is a **sampled** test (k=24 per path). A crossing that happens entirely
+  between two samples is not seen. The case it exists for is a long overlap
+  rather than a point contact, so this is a reasonable trade rather than a
+  silent hole.
+- It only fires when the inner run **fits** inside the outer's bore. That is what
+  distinguishes *nesting* — which the subtraction pass deletes — from
+  *intersecting*, which is the point of a junction.
 
 ## Joint bodies
 
