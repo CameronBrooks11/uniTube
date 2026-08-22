@@ -56,4 +56,38 @@ cf = [
 ];
 assert(abs(ut_volume(cp, cf) - 1) < 1e-9, "ut_volume: unit cube must measure exactly 1");
 
+// ============================================ inradius: EDGES, not vertices
+// ut_ring puts every point exactly on the nominal circle, so a vertex-based
+// "inradius" returns the nominal radius at every resolution while the real
+// inscribed circle is smaller by cos(180/n). That overstatement sized a
+// subtracted sphere and put a hole through a junction.
+for (n = [ 5, 6, 8, 12, 24, 64 ])
+{
+    let(ring = ut_ring(10, n), want = 10 * cos(180 / n))
+    {
+        assert(abs(max([for (q = ring) norm(q)]) - 10) < 1e-9,
+               "the vertices are on the nominal circle -- that is the trap");
+        assert(abs(ut_inradius(ring) - want) < 1e-9,
+               str("ut_inradius at n=", n, ": expected ", want, " got ", ut_inradius(ring)));
+        assert(ut_inradius(ring) <= 10 + 1e-9, "the inradius never exceeds the circumradius");
+    }
+}
+// A square, where the answer is known by inspection: circumradius 10*sqrt(2),
+// inradius exactly 10.
+sq = [ [ 10, 10 ], [ -10, 10 ], [ -10, -10 ], [ 10, -10 ] ];
+assert(abs(ut_inradius(sq) - 10) < 1e-9, str("square inradius must be 10, got ", ut_inradius(sq)));
+
+// ============================================ the sphere OpenSCAD actually emits
+// A sphere is faceted in two directions, so it loses cos(180/n) twice. Measured
+// against the emitted mesh: exact for n >= 8, conservative below.
+for (t = [ [ 8, 8.5355 ], [ 12, 9.3301 ], [ 24, 9.8296 ], [ 32, 9.9039 ], [ 48, 9.9572 ] ])
+{
+    let(got = ut_sphere_inradius(10, $fn = t[0]))
+        assert(abs(got - t[1]) < 1e-3, str("sphere inradius at $fn=", t[0], ": expected ", t[1], " got ", got));
+}
+// Below n=8 it must UNDER-estimate -- erring low is the safe direction for
+// anything that has to fit inside the result.
+assert(ut_sphere_inradius(10, $fn = 5) < 7.33, "at $fn=5 the model must sit below the true 7.330");
+assert(ut_sphere_inradius(10, $fn = 6) < 7.746, "at $fn=6 the model must sit below the true 7.746");
+
 cube(0.001); // sentinel
