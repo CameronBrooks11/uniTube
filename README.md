@@ -8,8 +8,9 @@ and assembled into branching networks whose bores stay open.
 
 > **Status: v1 core complete — path, profile, and network.** Four frontends
 > compile to one canonical spine, sweep as a single polyhedron, and assemble into
-> branching hollow networks whose bores stay open. See [`PLAN.md`](PLAN.md) for
-> the architecture and [`BACKLOG.md`](BACKLOG.md) for what is next.
+> branching hollow networks whose bores stay open. See [`docs/`](docs/) for the
+> architecture and the decisions, and
+> [issues](https://github.com/CameronBrooks11/uniTube/issues) for what is next.
 >
 > Not yet shipped, deliberately: terminations (a separate library), junction
 > fillets, profile variation. Not yet tagged.

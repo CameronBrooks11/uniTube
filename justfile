@@ -1,7 +1,7 @@
 # uniTube — The Universal Tube Library for OpenSCAD
 #
 # uniTube has NO dependencies. A fresh clone renders immediately; `just setup`
-# only verifies the toolchain. See PLAN.md §9.1 for why.
+# only verifies the toolchain. See docs/adr/0001-no-dependencies.md for why.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -128,7 +128,7 @@ check: fmt-check lint guards warnings
     while IFS= read -r f; do
       # --hardwarnings turns an unknown named argument into exit 1. Without it
       # OpenSCAD exits 0 — that is the exact bug class that broke this library
-      # for 19 months (see PLAN.md §1). Never drop this flag.
+      # for 19 months (see docs/verification.md). Never drop this flag.
       # The target MUST be .stl: with -o *.csg a failing assert() exits 0.
       openscad --hardwarnings -o "{{OUT}}/check/$(basename "${f%.scad}").stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "CHECK FAIL: $f"; exit 1; }

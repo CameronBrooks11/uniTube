@@ -139,7 +139,7 @@ Every silent failure this design was reviewed against reported `Simple: yes`:
 | od=12 swept through an r=4 bend, self-intersecting | `Simple: yes, Volumes: 2` |
 | junction rendering as two pieces joined by slivers | `Simple: yes` |
 
-So the gate is four tiers (`PLAN.md` §6), and the two that matter here are:
+So the gate is tiered (`docs/verification.md`), and the two that matter here are:
 
 - **`ut_check_net`** — `NET-1..5`, analytic, on the IR as pure data, no rendering.
 - **`checks/`** — declared engineering intent, verified with

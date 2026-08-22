@@ -31,7 +31,7 @@ matches the analytic value to six significant figures.
 
 ## Corollary — both loops are stored counter-clockwise
 
-PLAN.md §3 specified outer-CCW / inner-CW, mirroring how region-based sweep
+The original design sketch specified outer-CCW / inner-CW, mirroring how region-based sweep
 libraries mark a hole. **Implementation deviates: both loops are stored CCW.**
 
 Reversing the inner loop destroys the very index correspondence this ADR

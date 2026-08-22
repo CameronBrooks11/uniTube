@@ -4,7 +4,7 @@
 
 ## Context
 
-`PLAN.md` §3 described the split tube as returning "ONE closed C-shaped loop —
+The original design sketch described the split tube as returning "ONE closed C-shaped loop —
 the outer arc from 30 to 330, then the inner arc back from 330 to 30 — with
 `inner=undef`". `docs/profile.md` then predicted the consequence: a C-section is
 **not star-shaped about its centroid**, so `ut_rod`'s centroid-fan end cap would

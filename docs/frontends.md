@@ -28,7 +28,8 @@ ut_curve(function(t) [80*cos(360*t), 80*sin(360*t), 60*t], n = 180)
 ## Choosing one
 
 - **Known absolute coordinates?** `ut_polyline`. Its guards are the strongest,
-  because it is the one that can be over-constrained (see `PLAN.md` §9.5).
+  because it is the one that can be over-constrained (see **The scale-to-fit
+  trap** below).
 - **Describing how the tube is BENT rather than where it goes?** `ut_turtle`. It
   is how a real bender is programmed and it round-trips with manufacturing data.
 - **A formula?** `ut_curve`.
@@ -89,7 +90,23 @@ one.
 The honest upgrade is a **biarc fitter**: approximate each span by a pair of
 tangent-continuous arcs to a tolerance, emitting real `["A"]` segments and
 restoring all three properties. CAM systems have done this since the 1980s.
-`PLAN.md` §10.
+Tracked as issue #17.
+
+## The scale-to-fit trap
+
+Fillet radii that do not fit on a leg are an **error** naming the leg and both
+radii — never a silent clamp.
+
+The forgiving alternative is worth spelling out, because it looks like the safe
+choice and is the opposite. SVG-style "scale the radius down until it fits"
+manufactures a silent failure at precisely the input where you most need a
+message: on a 180° doubleback it scales the radius to exactly **0**, which reads
+as a sharp corner, whose bisector normal is `unit([0,0,0])` — `NaN`.
+
+Measured on the unforgiving path: the same waypoints at radii `[20,20]` render
+genus 1, and at `[80,80]` on a 100 mm leg render **genus 2** — an extra
+through-hole — with zero diagnostics, because OpenSCAD emits nothing for a
+non-positive extrusion height.
 
 ## Not shipped, and why
 
