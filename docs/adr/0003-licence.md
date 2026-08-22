@@ -1,6 +1,6 @@
 # ADR 0003 — uniTube is BSD-2-Clause; prior art is quarantined
 
-**Status:** accepted (2026-08-21)
+**Status:** accepted (2026-08-21) · **amended 2026-08-21 — see below**
 
 ## Context
 
@@ -42,3 +42,18 @@ with the BSD-3 `pipe-joints` code already in the tree.
 - **Lint cannot detect copy-paste.** `reference/gringer/path_extrude.scad` is
   GPLv3 and is the most tempting file to crib from while writing
   `src/ut_mesh.scad`. This is called out in `NOTICE` and `AGENTS.md`.
+
+
+## Amendment — `reference/jantecnl/` deleted
+
+This ADR originally kept the 4-into-1 prototype on the grounds that "only its run
+*coordinates* are used, as a test fixture" and "if provenance is ever contested,
+deleting that directory costs nothing".
+
+It has been deleted. The coordinates are now first-party geometry in
+`examples/06_manifold_4into1.scad`, so the directory bought nothing but a file
+with **no licence statement of any kind** sitting in a repository whose whole
+licence story is otherwise clean. The historical record survives in
+`docs/salvage.md` §4 and in the git history.
+
+Everything else in this ADR stands.

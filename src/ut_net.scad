@@ -15,7 +15,7 @@
 // The subtraction happens once per group, AFTER all unions in that group, so B's
 // shell cannot seal A's lumen: B's shell is unioned before A's bore is cut, and
 // A's bore always wins. This is the inherited TODO at
-// reference/jantecnl/curvedPipe-4-into-1.scad:78-83, promoted from a comment to
+// the 2023 prototype (removed; see docs/salvage.md §4), promoted from a comment to
 // an architectural invariant -- and it already ships, in the wrong file, as
 // reference/doommeister/Round_Ducting_V1.1.scad:168 middle_tee_n.
 //
