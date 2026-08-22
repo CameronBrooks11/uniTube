@@ -157,7 +157,13 @@ function ut_stations(path, opts = []) =
                   ? let(h = _ut_signed_roll(norms[N - 1], n0, raw[N - 1][1]), step = sym > 0 ? 360 / sym : 360) h -
                         round(h / step) * step
                   : 0,
-        extra = twist + hol)[for (i = [0:N - 1]) let(
+        extra = twist + hol,
+        // STATION-7 — a CLOSED station list carries NO duplicated terminal
+        // station. The last raw sample coincides with the first by construction.
+        // It must survive long enough to measure the loop holonomy above, but it
+        // must not reach the backend: the wrap ring would stitch a station to
+        // itself. Measured before this: 88 degenerate triangles out of 2904.
+        last = closed ? N - 2 : N - 1)[for (i = [0:last]) let(
         a = sLast > ut_eps() ? extra * raw[i][4] / sLast
                              : 0)[raw[i][0], ut_unit(raw[i][1]),
                                   a == 0 ? norms[i] : ut_rotv(norms[i], a, ut_unit(raw[i][1])), raw[i][4]]];

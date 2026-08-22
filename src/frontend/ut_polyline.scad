@@ -27,21 +27,24 @@ function ut_polyline(pts, r = 0, closed = false, frame = "transport", normal = u
             _ut_nodup(pts, 1),
             "ut_polyline(): two consecutive waypoints are identical -- remove the duplicate. The leg has no direction, and the failure otherwise surfaces as a SPINE-3 tangent discontinuity naming the wrong cause.")
             assert(is_num(r) || len(r) == len(pts) || len(r) == len(pts) - 2,
-                   str("ut_polyline(): r must be a scalar, or a list of ", len(pts), " or ", len(pts) - 2,
-                       " values")) assert(closed == false, "ut_polyline(): closed paths land in a later phase")
-                let(n = len(pts), dirs = [for (i = [0:n - 2]) pts[i + 1] - pts[i]], lens = [for (d = dirs) norm(d)],
-                    // vertex-indexed; ends are 0
-                    angs = [for (k = [0:n - 1])(k == 0 || k == n - 1) ? 0
-                                                                      : _ut_defl(dirs[k - 1], dirs[k], k, pts, r, n)],
-                    insets = [for (k = [0:n - 1]) angs[k] < ut_eps() ? 0 : _ut_r_at(r, k, n) * tan(angs[k] / 2)],
-                    ok = _ut_fits(lens, insets, 0, pts, r))
-                    ut_spine([for (i = [0:n - 2]) each concat(_ut_leg(pts, dirs, lens, insets, i),
-                                                              (i < n - 2 && angs[i + 1] >= ut_eps())
-                                                                  ? [_ut_bend(pts, dirs, insets, angs, i + 1, r, n)]
-                                                                  : [])],
-                             false,
-                             concat([ [ "frame", frame ], [ "twist", twist ] ],
-                                    is_undef(normal) ? [] : [[ "normal", normal ]]));
+                   str("ut_polyline(): r must be a scalar, or a list of ", len(pts), " or ", len(pts) - 2, " values"))
+                assert(
+                    closed == false,
+                    "ut_polyline(): closed paths are supported, but only through ut_spine(segs, closed=true). A closed POLYLINE needs an answer to what the fillet at the seam vertex does, and that is deliberately unanswered -- see docs/ir.md.")
+                    let(n = len(pts), dirs = [for (i = [0:n - 2]) pts[i + 1] - pts[i]], lens = [for (d = dirs) norm(d)],
+                        // vertex-indexed; ends are 0
+                        angs = [for (k = [0:n - 1])(k == 0 || k == n - 1)
+                                    ? 0
+                                    : _ut_defl(dirs[k - 1], dirs[k], k, pts, r, n)],
+                        insets = [for (k = [0:n - 1]) angs[k] < ut_eps() ? 0 : _ut_r_at(r, k, n) * tan(angs[k] / 2)],
+                        ok = _ut_fits(lens, insets, 0, pts, r))
+                        ut_spine([for (i = [0:n - 2]) each concat(_ut_leg(pts, dirs, lens, insets, i),
+                                                                  (i < n - 2 && angs[i + 1] >= ut_eps())
+                                                                      ? [_ut_bend(pts, dirs, insets, angs, i + 1, r, n)]
+                                                                      : [])],
+                                 false,
+                                 concat([ [ "frame", frame ], [ "twist", twist ] ],
+                                        is_undef(normal) ? [] : [[ "normal", normal ]]));
 
 // GUARD 1 and 2 -- the deflection angle, with the two degeneracies that used to
 // vanish silently. A 180 deg doubleback gives tan(90) = inf and [nan,nan,nan];

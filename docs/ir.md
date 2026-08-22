@@ -72,6 +72,7 @@ Every historical geometry bug in this repository, and both of the bugs found in
 | `STATION-4` | `s[0] = 0`, strictly increasing, `s[last] = ut_length(path)` |
 | `STATION-5` | bounded turn between consecutive tangents |
 | `STATION-6` | continuous roll — the frame never flips |
+| `STATION-7` | a **closed** station list carries no duplicated terminal station |
 
 ### `SPINE-5` and sampled segments — a stated limit
 
@@ -91,6 +92,22 @@ This is recorded rather than fixed. Closing it means fitting arcs to the samples
 (`BACKLOG.md` §3). Resolution independence is the one argument that genuinely
 justifies building it; the arclength and transport arguments do not survive
 measurement.
+
+### Closed paths
+
+Reachable through `ut_spine(segs, closed = true)` **only**. `ut_polyline` refuses
+them explicitly; `ut_turtle` and `ut_curve` have no `closed` parameter, so
+`--hardwarnings` turns passing one into an error. Wiring `closed` through the
+other frontends raises a real question each — what *is* a closed turtle program?
+— and is deliberately unanswered.
+
+The frame is transported all the way round, the loop holonomy is measured against
+the seed, the nearest multiple of `360/symmetry` is absorbed, and the remainder is
+distributed by arclength. Measured on a four-arc torus: residual **0°**.
+
+**A closed tube's lumen is a sealed internal cavity.** CGAL reports `Volumes: 3`
+— outside, material, trapped bore. That is correct topology, not a defect, and it
+means the part is useless until something breaches it.
 
 ## Frame policy
 

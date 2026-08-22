@@ -2,9 +2,7 @@
 // This whole file is only possible because the IR is data (PLAN.md §6 tier 1).
 
 // clang-format off
-use <../src/ut_core.scad>;
-use <../src/ut_math.scad>;
-use <../src/ut_path.scad>;
+use <../src/uniTube.scad>;
 // clang-format on
 
 // ============================================ the worked 90-degree elbow (PLAN.md §2.2)
@@ -95,5 +93,47 @@ tw = ut_stations(elbow, [[ "twist", 90 ]]);
 assert(abs(_t_roll(ut_st_n(tw[0]), [ 0, 0, 1 ])) < 1e-9, "twist: zero at the start");
 function _t_roll(a, b) = ut_turn(a, b);
 assert(abs(_t_roll(ut_st_n(tw[len(tw) - 1]), [ 0, 0, 1 ]) - 90) < 1e-6, "twist: full 90 deg by the end");
+
+// ============================================ closed paths
+// The machinery existed from Phase 1 and was unreachable; this is the coverage
+// it never had. Reachable through ut_spine only -- ut_polyline refuses closed
+// explicitly, and ut_turtle / ut_curve have no such parameter.
+CR = 60;
+loop = ut_spine(
+    [
+        ut_arc([ 0, 0, 0 ], [ 1, 0, 0 ], [ 0, 1, 0 ], CR, 90),
+        ut_arc([ 0, 0, 0 ], [ 0, 1, 0 ], [ -1, 0, 0 ], CR, 90),
+        ut_arc([ 0, 0, 0 ], [ -1, 0, 0 ], [ 0, -1, 0 ], CR, 90),
+        ut_arc([ 0, 0, 0 ], [ 0, -1, 0 ], [ 1, 0, 0 ], CR, 90),
+    ],
+    closed = true);
+
+assert(ut_closed(loop), "the spine records that it is closed");
+assert(abs(ut_length(loop) - 2 * PI * CR) < 1e-9, "exact circumference, no tessellation");
+
+csts = ut_stations(loop);
+CN = len(csts);
+
+// STATION-7 — NO duplicated terminal station. The last raw sample coincides with
+// the first by construction; it must survive long enough to measure the loop
+// holonomy but must not reach the backend, or the wrap ring stitches a station
+// to itself. Measured before the fix: 88 degenerate triangles out of 2904.
+assert(norm(ut_st_p(csts[CN - 1]) - ut_st_p(csts[0])) > 1,
+       "STATION-7: a closed station list must not duplicate its terminal station");
+assert(min([for (i = [0:CN - 2]) norm(ut_st_p(csts[i + 1]) - ut_st_p(csts[i]))]) > 1e-9, "STATION-1 holds too");
+
+// And the emitted mesh has no degenerate faces.
+crgn = ut_solid_rgn(ut_round(od = 14, wall = 2));
+cpts = ut_mesh_points(crgn, csts, true);
+cfcs = ut_mesh_faces(crgn, csts, true);
+assert(len([for (f = cfcs) if (norm(cross(cpts[f[1]] - cpts[f[0]], cpts[f[2]] - cpts[f[0]])) / 2 < 1e-9) 1]) == 0,
+       "a closed sweep must emit no degenerate triangles");
+
+// The loop holonomy is measured, absorbed and distributed, so the seam meets
+// itself: consecutive normals stay one step apart all the way round, including
+// across the wrap from the last station back to the first.
+assert(ut_turn(ut_st_n(csts[CN - 1]), ut_st_n(csts[0])) < 1e-6,
+       str("closed-loop holonomy residual must vanish, got ", ut_turn(ut_st_n(csts[CN - 1]), ut_st_n(csts[0]))));
+assert(max([for (s = csts) abs(ut_st_t(s) * ut_st_n(s))]) < 1e-9, "frames stay orthonormal all the way round");
 
 cube(0.001); // sentinel
