@@ -16,9 +16,12 @@ from PIL import Image
 
 
 def back_face_percent(path: str) -> float:
-    im = Image.open(path).convert("RGB")
+    # tobytes(), not getdata(): getdata is deprecated in Pillow 11 and its
+    # replacement does not exist in older ones. Raw bytes work in every version.
+    px = Image.open(path).convert("RGB").tobytes()
     model = back = 0
-    for r, g, b in im.getdata():
+    for i in range(0, len(px), 3):
+        r, g, b = px[i], px[i + 1], px[i + 2]
         if r > 250 and g > 250 and b > 215:  # background
             continue
         model += 1
