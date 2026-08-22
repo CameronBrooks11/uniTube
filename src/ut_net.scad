@@ -97,10 +97,6 @@ function _ut_end_station(run, end, opts = []) = let(sts = ut_stations(ut_run_pat
                                                     : sts[N - 1];
 function _ut_end_pos(run, end, opts = []) = is_list(end) ? ut_at(ut_run_path(run), end[1])[0]
                                                          : ut_st_p(_ut_end_station(run, end, opts));
-// Outward: away from the material at that end.
-function _ut_end_dir(run, end, opts = []) = is_list(end) ? undef
-                                                         : (end == "a" ? -ut_st_t(_ut_end_station(run, end, opts))
-                                                                       : ut_st_t(_ut_end_station(run, end, opts)));
 
 // The joint node. Declared if given; otherwise a mid-run landing defines it
 // (the node sits on the trunk's CENTRELINE), else the mean of the incident ends.

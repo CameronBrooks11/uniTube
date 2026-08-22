@@ -14,13 +14,10 @@ function ut_back() = [ 0, 1, 0 ];
 function ut_opt(opts, key, dflt = undef) = let(hit = [for (e = opts) if (e[0] == key) e[1]]) len(hit) > 0 ? hit[0]
                                                                                                           : dflt;
 
-function ut_has_opt(opts, key) = len([for (e = opts) if (e[0] == key) 1]) > 0;
-
 // --- tagged records -----------------------------------------------------------
 // Every record is ["tag", ...fields]. User code reads them through accessors,
 // never by index, so a field can be added without invalidating existing values.
 function ut_tag(rec) = is_list(rec) ? rec[0] : undef;
-function ut_is(rec, tag) = ut_tag(rec) == tag;
 
 // --- assertion helper ---------------------------------------------------------
 // Usage: function f(x) = ut_req(x > 0, str("f(): x must be positive, got ", x)) x * 2;

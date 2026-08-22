@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    # PINNED, not ubuntu-latest. Noble ships openscad 2021.01, which is exactly
+    # the version floor this library is verified against. When ubuntu-latest
+    # rolls forward it will carry a different OpenSCAD and CI would silently
+    # stop testing the floor.
+    runs-on: ubuntu-24.04
+    env:
+      # Free insurance. STL export needs no X server -- verified -- so there is
+      # no xvfb here; the community habit of wrapping OpenSCAD in xvfb-run comes
+      # from PNG rendering, which this repo never does.
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends openscad just
+          # The runner preinstalls clang-format 16/17/18 under VERSIONED names
+          # only. Pin the major rather than apt-installing an unpinned
+          # metapackage: a formatter bump breaking fmt-check for reasons nobody
+          # can reproduce locally is a bad afternoon.
+          sudo ln -sf "$(command -v clang-format-18)" /usr/local/bin/clang-format
+
+      - name: Verify the toolchain
+        run: just setup
+
+      - name: Assert the version floor is exactly what the library was verified on
+        # `just setup` PRINTS the version but does not fail on a mismatch.
+        # Without this, an apt bump would move CI off the floor silently -- the
+        # same instinct as --hardwarnings: make the silent case loud.
+        run: openscad --version 2>&1 | grep -q '2021.01'
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: partspec must actually run, not skip
+        # `just partspec` exits 0 when uvx is absent, which is friendly locally
+        # and dangerous here: a green build with 19 unrun contract checks.
+        run: command -v uvx
+
+      - run: just check
+      - run: just test
+      - run: just cgal
+      - run: just partspec
+
+      - name: Keep the evidence when the gate fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: out/
+          retention-days: 7
