@@ -20,11 +20,33 @@ use <ut_profile.scad>;
 // section that is od/2; for an arbitrary one it is the farthest vertex.
 function ut_prof_reach(prof) = max([for (q = ut_prof_outer(prof)) norm(q)]);
 
+// The tightest curvature anywhere along a sampled chain, as the smallest
+// circumradius of three consecutive points: r = abc / 4A.
+//
+// This is an ESTIMATE and it FAILS OPEN -- measured, it over-reads the true
+// minimum radius by ~6.5% on a fast-varying curve, so a marginal case can slip
+// through. It is still worth having: without it a P segment was exempt from the
+// library's flagship safety assert entirely, and a self-intersecting swept helix
+// rendered "Simple: yes, Volumes: 2" with zero warnings. Collinear triples give
+// an infinite radius and are skipped.
+function _ut_min_circumradius(p, i, acc) =
+    i > len(p) - 3 ? acc
+                   : let(a = norm(p[i + 1] - p[i]), b = norm(p[i + 2] - p[i + 1]), c = norm(p[i + 2] - p[i]),
+                         area = norm(cross(p[i + 1] - p[i], p[i + 2] - p[i])) / 2)
+                         _ut_min_circumradius(p, i + 1, area < 1e-12 ? acc : min(acc, a *b *c / (4 * area)));
+
 // CHECK-1 — a bend radius must exceed the profile's outer reach, strictly.
 // At r == reach the inner extremity of the swept surface collapses onto the bend
 // axis; below it, the tube passes through itself.
 function _ut_chk_bends(segs, i, reach, od) =
     i >= len(segs) ? true
+    : (ut_seg_kind(segs[i]) == "P")
+        ? let(r = _ut_min_circumradius(segs[i][1], 0, 1e18)) assert(
+              r > reach + ut_eps(),
+              str("CHECK-1: the tightest curvature on this sampled path has radius ", r,
+                  ", which is not greater than the profile's outer reach ", reach,
+                  " -- the tube passes through itself. Sampled estimate: it fails OPEN, so a marginal case can still slip through."))
+              _ut_chk_bends(segs, i + 1, reach, od)
     : (ut_seg_kind(segs[i]) != "A")
         ? _ut_chk_bends(segs, i + 1, reach, od)
         : let(r = segs[i][4])

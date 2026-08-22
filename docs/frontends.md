@@ -56,17 +56,28 @@ things that arcs provide:
 |---|---|---|
 | arclength | exact, closed form | chord sum, slightly under |
 | transport | exact, closed form | discrete, O(h²) |
-| `CHECK-1` min bend radius | asserted | **not available** — there is no `r` |
+| `CHECK-1` min bend radius | asserted, exact | asserted from **discrete curvature** — accurate (11.014 against an analytic 11.013 on a helix) but it fails OPEN, so a marginal case can slip through |
 
 Measured on a 2-turn helix at n=160: the sampled length is 0.025% under the
 analytic value, and interior tangents from central differences agree with the
 analytic tangent to 0.006°.
 
-**But the ENDS are first-order.** There is no centre to difference about, so an
-end tangent is a one-sided estimate and its error is about half a sample's
-rotation — measured 2.24° at n=160 against a predicted 2.25°. The ends are
-exactly where port frames come from (`STATION-3`), and 2.2° across a 20 mm flange
-is ~0.8 mm of gap. **Supply `dfdt` whenever you know the derivative.**
+**The ends used to be first-order** — a two-point chord, error about half a
+sample's rotation, measured 2.24° at n=160. Since the ends are exactly where port
+frames come from (`STATION-3`) and 2.2° across a 20 mm flange is ~0.8 mm of gap,
+that was the only error in a sampled path large enough to make a physical part
+wrong. `_ut_central` now uses a **three-point one-sided difference**, which is
+second order like the interior:
+
+| n | two-point (old) | three-point (now) |
+|---|---|---|
+| 40 | 8.949° | 0.460° |
+| 160 | 2.237° | **0.0141°** |
+| 320 | 1.119° | 0.0032° |
+
+Supplying `dfdt` is still exact and still worth doing when you know the
+derivative — it is just no longer the difference between a usable port and a bad
+one.
 
 > **Foot-gun.** Only the *direction* of `dfdt` is used, but the relative scaling
 > of its components matters — and OpenSCAD's trig is in DEGREES:

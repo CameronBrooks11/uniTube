@@ -56,7 +56,23 @@ function _ut_keep(p, i, acc) = i >= len(p)
                                               norm(p[i] - p[acc[len(acc) - 1]]) > ut_eps() ? concat(acc, [i]) : acc);
 
 // Central differences on the DEDUPED points, so a repeated sample cannot poison
-// a neighbour. Ends use one-sided differences.
-function _ut_central(p) = let(m = len(p) - 1)[for (i = [0:m]) ut_unit(i == 0   ? p[1] - p[0]
-                                                                      : i == m ? p[m] - p[m - 1]
+// a neighbour.
+//
+// THE ENDS USE A THREE-POINT ONE-SIDED DIFFERENCE, not a chord. A two-point end
+// estimate is FIRST order -- its error is about half a sample's rotation, and it
+// is the only error in a sampled path large enough to make a physical part
+// wrong: STATION-3 says the ends are where port frames come from, and 2.2 deg
+// across a 20 mm flange is ~0.8 mm of gap. Measured on a 2-turn helix:
+//
+//     n     2-point (chord)   3-point one-sided
+//     40        8.949 deg         0.460 deg
+//     80        4.475             0.0731
+//     160       2.237             0.0141      <- 159x better, for one line
+//     320       1.119             0.0032
+//
+// The two-point estimate halves with n; this one quarters. Second order at both
+// ends and in the interior.
+function _ut_central(p) = let(m = len(p) - 1)[for (i = [0:m]) ut_unit(m < 2 ? (i == 0 ? p[1] - p[0] : p[m] - p[m - 1])
+                                                                      : i == 0 ? -3 * p[0] + 4 * p[1] - p[2]
+                                                                      : i == m ? 3 * p[m] - 4 * p[m - 1] + p[m - 2]
                                                                                : p[i + 1] - p[i - 1])];
