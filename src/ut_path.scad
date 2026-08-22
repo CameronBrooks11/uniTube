@@ -39,7 +39,18 @@ function ut_arc_from(c, from, to, axis) = let(u = ut_unit(from - c), ax = ut_uni
 // A sampled chain. Tangents are carried per sample: a bare point list
 // reintroduces the chord-tangent error this IR exists to avoid.
 function ut_sampled(pts, tans) = assert(len(pts) >= 2, "ut_sampled(): need at least 2 points")
-    assert(len(pts) == len(tans), "ut_sampled(): one tangent per point")["P", pts, tans];
+    assert(len(pts) == len(tans), "ut_sampled(): one tangent per point")
+    // The same first-use mistake ut_polyline guards (frontend/ut_polyline.scad),
+    // guarded HERE because every P segment from every frontend passes through
+    // this one constructor. Without it ut_curve(function(t) [t, t*t]) built a
+    // spine happily and failed at SWEEP time, far from the cause, with the
+    // identical misleading message quoted below.
+    assert(
+        _ut_p3d(pts, 0) && _ut_p3d(tans, 0),
+        "ut_sampled(): every point and tangent must be a 3-vector [x,y,z]. A 2D value reaches cross() and reports only \"atan2() parameter could not be converted\", naming ut_math rather than your curve.")
+        ["P", pts, tans];
+
+function _ut_p3d(v, i) = i >= len(v) ? true : (is_list(v[i]) && len(v[i]) == 3) && _ut_p3d(v, i + 1);
 
 // =============================================================== accessors
 
