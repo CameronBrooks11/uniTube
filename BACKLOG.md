@@ -331,6 +331,31 @@ All five tiers merged as PRs #5-#9. `main` is green on `check`, `test`, `cgal`,
 
 **Guards: 17 → 31.** Every one is watched to fail before it is trusted.
 
+## 9. Housekeeping pass — 2026-08-21
+
+A read-everything review of `src/`, the gates and the documents, after the tiers
+were merged. Nothing here was on the queue; all four bugs were found by reading
+the code against its own documents and then reproducing them.
+
+| | found | measured |
+|---|---|---|
+| `ut_turtle` | a bend over 180° as the **first or last** command aborted with `unknown command "undef"`. **OpenSCAD silently reverses a descending range** — `[0:-1]` is `[-1, 0]`, not `[]`, with no warning under `--hardwarnings` — so the splice that replaces the bend with two halves spliced `undef` into the program. The one covered case had commands on both sides. | both boundaries now split exactly: 161.372 mm against an analytic 161.372, and 400° halves twice into 4 arcs |
+| `ut_at` | on a `P` segment it returned the tangent at the **far end of the chord for every `s`**, so `ut_at(path, 0)` gave the tangent one sample downstream. Public API, documented to return the tangent at `s`, with **no test at all** — which is how it survived. | **8.94° → 0** at `s=0` on an n=40 helix; worst case anywhere on the path now 0.021° |
+| `ut_sampled` | accepted 2D points, building a spine happily and failing at *sweep* time with `atan2() parameter could not be converted` — the identical misleading message `ut_polyline`'s guard 1 exists to prevent, quoted verbatim in that guard. Guarded in the shared constructor, so every `P` frontend gets it. | guard `g_curve_2d` |
+| `ut_round(id=0)` | reported `PROF-1: inner loop must also be counter-clockwise`, naming the wrong cause: a zero bore collapses the inner loop to a point. The answer is `ut_rod()`, and now the message says so. | guard `g_round_zero_bore` |
+
+Also: `ut_joint(body="none")` was a documented, working option with **zero
+coverage** — now asserted, including that `NET-4` correctly skips a joint that
+emits no ball. Dead code removed (`ut_tag`, and `_ut_chk_bends`'s unread `od`
+parameter). Three comments that had gone false were corrected — `ut_core`
+contradicted `AGENTS.md` on `use` transitivity, `_ut_nests` still carried its
+pre-NET-5 description above the replacement, and `ut_math` claimed a line count
+it had outgrown. `just lint`'s rules renumbered to `LINT RULE n` so they stop
+colliding with `AGENTS.md`'s own list.
+
+**Guards: 32 → 34.** All five gates green: `check`, `test`, `cgal` (12/12),
+`warnings`, `partspec` (19/19).
+
 ### What remains, unchanged
 
 Everything in §7, plus:

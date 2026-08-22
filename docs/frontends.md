@@ -116,3 +116,17 @@ function my_frontend(...) =
 The constructors assert the `SPINE` invariants for you. If your source can
 produce a bend beyond 180°, split it — `SPINE-4` caps a single arc so the tangent
 sign can never be ambiguous, and splitting is the frontend's job.
+
+> **Splice carefully.** `ut_turtle` splits by replacing the oversized bend in its
+> own command list with two halves and re-entering at the same index. Both slices
+> around it must be guarded against being empty, because **OpenSCAD silently
+> reverses a descending range**: `[0:-1]` is `[-1, 0]`, not `[]`, and
+> `--hardwarnings` says nothing. Unguarded, a bend over 180° as the *first* or
+> *last* command spliced `undef` into the program and aborted with
+> `unknown command "undef"` — naming the wrong cause entirely. The only case
+> covered had commands on both sides of the bend, so neither boundary was tested.
+
+A frontend that emits `P` segments gets one guard for free: `ut_sampled()` rejects
+2D points and tangents by name. Without it a 2D curve builds a spine happily and
+fails at *sweep* time with `atan2() parameter could not be converted`, pointing at
+`ut_math` rather than at your curve.

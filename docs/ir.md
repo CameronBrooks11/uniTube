@@ -47,6 +47,24 @@ resolution is decided, duplicates are gone, closed-loop holonomy is absorbed.
 plus the position. **No scale, no shear, ever.** A tapered run that baked scale
 into its frames would hand every attached termination a silently shrunken port.
 
+### `ut_at(path, s)` — a point on the spine, without tessellating
+
+`ut_at` returns `[position, unit tangent]` at an arclength, read **exactly from
+the spine**: it walks segments, never stations, so the answer does not depend on
+`$fa`/`$fs` and does not interpolate between samples. Joints use it for mid-run
+landings, which is the case where a branch meets a trunk somewhere along its
+length rather than at an end.
+
+On `L` and `A` segments it is exact. On a `P` segment the position is exact on
+the chord and the tangent is **interpolated along it**, so it is exactly the
+stored tangent at every sample and second order in between — measured worst case
+0.021° anywhere on a 2-turn helix at `n=40`.
+
+> It used to return the tangent at the far end of the chord for every `s`, which
+> made `ut_at(path, 0)` report the tangent one sample downstream: 8.94° out at
+> the start of that same helix, exactly one sample's rotation. The function had
+> no test at all, which is how it survived. It has one now.
+
 ## The rule
 
 Frontends produce a spine and never touch frames. Exactly one function lowers

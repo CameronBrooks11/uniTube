@@ -75,6 +75,12 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
   `x == x` (false for nan only). The two distinguish the failure modes this
   library cares about: `acos` past 1.0 gives nan, `tan(90)` gives inf.
 - **`cross()` requires 3-vectors.** For a planar angle use `atan2(y, x)`.
+- **A descending range is SILENTLY REVERSED.** `[0:-1]` evaluates to `[-1, 0]`,
+  not to an empty list, and `--hardwarnings` says nothing. Any `[for (k = [0:i-1])
+  ...]` prefix slice must be guarded with `i == 0 ? [] : ...`, and any
+  `[i+1:len(v)-1]` suffix with `i >= len(v)-1 ? [] : ...`. This corrupted
+  `ut_turtle`'s >180° bend split at both ends of a program, and the abort named
+  the wrong cause: `unknown command "undef"`.
 - **Swept quads are non-planar.** Emit triangles, or OpenSCAD prints "PolySet has
   nonplanar faces. Attempting alternate construction" and guesses the topology.
 
