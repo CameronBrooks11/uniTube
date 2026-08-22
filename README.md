@@ -46,7 +46,11 @@ ut_assemble(ut_net([trunk, branch],
 ```
 
 See [`examples/`](examples/) — an elbow, a split conduit, a helix, a square bore,
-a 4-into-1 manifold, a coaxial jacket, a wall-landing tee.
+a 4-into-1 manifold, a coaxial jacket, a wall-landing tee, a closed loop.
+
+To look inside one, wrap it: `ut_cutaway([0,0,1]) part();`. On a section that is
+not rotationally symmetric the cut face also shows the roll, which is otherwise
+invisible on a round tube. `examples/12_section_view.scad`.
 
 ## Requirements
 

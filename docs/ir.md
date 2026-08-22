@@ -89,7 +89,7 @@ Every historical geometry bug in this repository, and both of the bugs found in
 | `STATION-3` | terminal and arc-tangency tangents are EXACT, never smoothed |
 | `STATION-4` | `s[0] = 0`, strictly increasing, `s[last] = ut_length(path)` |
 | `STATION-5` | bounded turn between consecutive tangents |
-| `STATION-6` | continuous roll — the frame never flips |
+| `STATION-6` | continuous roll — the frame never flips. **Enforced in `ut_stations()`**: the roll step may not exceed the tangent step by more than 45°. Transport measures 0 by construction, a fixed frame 1e-13; a flip measures 84–174, so there is nothing in between to tune against |
 | `STATION-7` | a **closed** station list carries no duplicated terminal station |
 
 ### `SPINE-5` and sampled segments — a stated limit

@@ -363,6 +363,61 @@ re-verify a mechanism that `tests/t_mesh.scad` covers against the actual backend
 **Guards: 32 → 34.** All five gates green: `check`, `test`, `cgal` (11/11),
 `warnings`, `partspec` (19/19).
 
+## 10. The roll frame's degenerate cases — 2026-08-21
+
+Found by review of rendered output. One of the four examples flagged was really
+broken; the other three were correct, and the section views in `examples/12` are
+how that was settled rather than argued.
+
+**`examples/05_split_conduit` asked for a seam that cannot exist.** Its final leg
+ran straight up +Z under `frame="fixed", normal=UP`, and its own header claimed
+"the gap faces world-up the whole way". A vertical pipe has no upward-facing
+side, so the claim was not merely wrong, it was unsatisfiable.
+
+`ut_ref_fallback()` swaps UP for BACK when the tangent is parallel to UP. That is
+right for what it was written for — seeding a transport frame **once**. Applied
+**per station** by `frame="fixed"`, the swap becomes a discontinuity: measured,
+the seam jumped **174° in a single 6° step**. The mesh stayed manifold, CGAL
+said `Simple: yes`, and `check` / `test` / `cgal` / `warnings` / `partspec` all
+passed.
+
+The projection is smooth to 1e-13 at every approach angle **down to 1° from the
+axis** and breaks only *at* it — a cliff, not ill-conditioning — so the fix is to
+refuse the undefined ask, not to widen a tolerance.
+
+### Three tests asserted the wrong property
+
+| where | asserted | should have asserted |
+|---|---|---|
+| `t_frame.scad` | the vertical leg's frame is **not NaN** | the roll is **continuous** |
+| `t_split.scad` | same, on the same shape of path | same |
+| `t_frame.scad` manual list | `max([abs(t·n)]) < 1e-9` | that no frame contains NaN |
+
+Both files ended on a vertical leg *on purpose*, and both checked finiteness. The
+fallback guarantees finiteness; it is the very thing that destroys continuity.
+`STATION-6` had been documented since Phase 1 and enforced by nothing.
+
+The third is the one worth remembering: a caller-supplied `frame=<list>` parallel
+to the tangent **does** produce `[nan,nan,nan]`, and the assert written to catch
+it passed, reporting `2.22e-16`, because **OpenSCAD's `max()` silently drops
+`nan`**. Any `assert(max([...]) < eps)` in this repo is blind to the failure it
+looks like it is guarding. Count offenders instead. Now in `AGENTS.md`.
+
+### Shipped
+
+- `STATION-6` enforced in `ut_stations()` — the roll step may not exceed the
+  tangent step by 45°. Transport measures 0 by construction and a fixed frame
+  1e-13; a flip measures 84–174, so nothing sits in the gap to tune against.
+- `frame="fixed"` and `frame=<list>` refuse a reference parallel to the axis,
+  each naming the cause and the fix.
+- `ut_cutaway()` in the new `src/ut_view.scad`, and `examples/12_section_view.scad`.
+  A cut answers both questions these models raise, because they are one question:
+  it shows the bore directly, and on a section that is not rotationally symmetric
+  the cut face **is** the roll.
+
+**Guards: 34 → 37.** All five gates green: `check`, `test`, `cgal` (12/12),
+`warnings`, `partspec` (19/19).
+
 ### What remains, unchanged
 
 Everything in §7, plus:
