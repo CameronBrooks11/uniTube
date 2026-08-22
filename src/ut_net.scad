@@ -262,22 +262,47 @@ function _ut_net4(net) = let(
 // coaxial jacket's outer bore swallows the inner tube entirely: measured, 26% of
 // the material vanished while CGAL still reported `Simple: yes`. Two runs whose
 // geometries can nest MUST be in different groups.
-function _ut_net5(net) =
-    let(bad = [for (g = ut_groups(net))
-                let(rs = _ut_runs_in(net, g)) for (i = [0:max(0, len(rs) - 1)],
-                                                   k = [0:max(0, len(rs) - 1)]) if (i != k && _ut_nests(rs[i], rs[k]))
-                    str(ut_run_name(rs[k]), " nests inside ", ut_run_name(rs[i]), "'s bore")])
-        assert(len(bad) == 0,
-               str("NET-5 (lumen nesting): ", bad,
-                   ". These runs share a lumen group, so the outer bore would delete the inner run entirely. ",
-                   "Put the inner run in its own group: ut_run(name, path, prof, group=1).")) true;
+function _ut_net5(net) = let(bad = [for (g = ut_groups(net)) let(rs = _ut_runs_in(net, g)) for (
+                                 i = [0:max(0, len(rs) - 1)],
+                                 k = [0:max(0, len(rs) - 1)]) if (i != k && _ut_nests(net, rs[i], rs[k]))
+                                     str(ut_run_name(rs[k]), " nests inside ", ut_run_name(rs[i]), "'s bore")])
+    assert(len(bad) == 0,
+           str("NET-5 (lumen nesting): ", bad,
+               ". These runs share a lumen group, so the outer bore would delete the inner run entirely. ",
+               "Put the inner run in its own group: ut_run(name, path, prof, group=1).")) true;
 
 // B nests inside A's bore when B fits within it AND the two are actually near
 // each other. A heuristic on endpoints, documented as one -- it catches the real
 // case (a jacket sharing a path) without a full path-distance computation.
-function _ut_nests(a, b) = let(ra = ut_bore_inradius(ut_run_prof(a)), rb = ut_prof_reach(ut_run_prof(b))) ra
-                           > rb &&min([for (pa = _ut_ends(a), pb = _ut_ends(b)) norm(pa - pb)]) < ra;
-function _ut_ends(r) = let(p = ut_run_path(r))[ut_at(p, 0)[0], ut_at(p, ut_length(p))[0]];
+// B nests inside A's bore when B FITS in it and B's centreline actually enters
+// it. "Fits" is what distinguishes NESTING (a tube inside a tube, which the
+// subtraction pass deletes) from INTERSECTING (a junction, which is the point).
+//
+// This was an ENDPOINT test until 2026-08-21, and the miss was total: slide a
+// liner 70 mm along a jacket so the two share no endpoint and it saw nothing
+// while the assembly silently lost 3733.3 mm3 -- exactly 100% of the liner --
+// with CGAL reporting "Simple: yes".
+//
+// It is a SAMPLED test, k points along each path. A crossing entirely between
+// two samples is not seen; k=24 resolves anything at the scale a bore inradius
+// cares about, and the nesting case this exists for is a long overlap rather
+// than a point contact.
+function _ut_nests(net, a, b) = let(ra = ut_bore_inradius(ut_run_prof(a)), rb = ut_prof_reach(ut_run_prof(b))) ra > rb
+                                && !_ut_share_joint(net, a, b) && _ut_min_path_dist(a, b) < ra;
+
+// THE EXEMPTION, and it is not optional. Two runs meeting at a joint NECESSARILY
+// approach within a bore radius -- that is what a joint IS. Without this, the
+// distance test rejects every tee and every manifold in the library, including
+// its own examples. Sharing a joint is the declaration that the approach is
+// deliberate.
+function _ut_share_joint(net, a, b) = len([for (j = ut_net_joints(net)) if (_ut_incident(j, ut_run_name(a)) &&
+                                                                            _ut_incident(j, ut_run_name(b))) 1]) > 0;
+function _ut_incident(j, name) = len([for (e = ut_joint_incident(j)) if (e[0] == name) 1]) > 0;
+
+// The closest approach of B's centreline to A's, both sampled.
+function _ut_min_path_dist(a, b, k = 24) = let(pa = _ut_path_samples(a, k), pb = _ut_path_samples(b, k))
+    min([for (qb = pb) min([for (qa = pa) norm(qa - qb)])]);
+function _ut_path_samples(r, k) = let(p = ut_run_path(r), L = ut_length(p))[for (i = [0:k]) ut_at(p, L *i / k)[0]];
 
 // Validate a network. Returns true so it can sit in an assert.
 // NET-0 — every RUN in the network gets the same analytic check a standalone

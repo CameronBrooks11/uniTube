@@ -186,17 +186,23 @@ directory** and will be lost. Preserve it or discard it deliberately.
 
 ---
 
-## 4. `NET-5` needs a decision, not a patch
+## 4. `NET-5` — RESOLVED 2026-08-21
 
 The obvious fix — sample both paths and compare distances — **false-positives on
 every tee**. Two runs that meet at a joint necessarily approach within a bore
 radius; that is what a joint *is*. The adversary implemented it and a normal
 trunk-and-branch tee tripped it.
 
-So the options are: exempt pairs sharing a joint (and say so in
-`docs/junctions.md`), or leave the heuristic and **document the measured blind
-spot honestly** — currently `docs/junctions.md` implies NET-5 catches this class,
-and §1.3 shows it does not.
+**Resolved: sampled path distance, with joint-sharing pairs exempt.** The
+exemption was proven load-bearing rather than assumed — a tee whose trunk bore
+comfortably contains its branch fails without it. Six cases are covered, three
+positive and three negative; see `tests/t_net.scad` and
+`tests/guards/g_net5_offset_nesting.scad`.
+
+Two limits are documented in `docs/junctions.md` rather than hidden: the test is
+sampled (k=24), so a crossing entirely between samples is unseen; and it only
+fires when the inner run *fits* inside the outer's bore, which is what separates
+nesting from an ordinary junction.
 
 ---
 
@@ -329,8 +335,6 @@ All five tiers merged as PRs #5-#9. `main` is green on `check`, `test`, `cgal`,
 
 Everything in §7, plus:
 
-- **NET-5's blind spot** — documented, not fixed. Exempting joint-sharing pairs
-  is the known-correct approach; it is deferred rather than guessed at (§4).
 - **Biarc fitting** — deferred with its billing corrected (§3). The prototype is
   at `spikes/biarc_fitter.scad` with the measurements that demoted it. The one
   argument that would justify building it is resolution independence, now

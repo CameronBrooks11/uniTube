@@ -106,4 +106,36 @@ assert(ut_turn(ut_port_normal(pb2), ut_st_n(swept[len(swept) - 1])) < 1e-9,
        str("the port frame must equal the frame actually swept; skew was ",
            ut_turn(ut_port_normal(pb2), ut_st_n(swept[len(swept) - 1])), " deg"));
 
+// ============================================ NET-5 and its joint exemption
+// NET-5 was an ENDPOINT test until 2026-08-21 and the miss was total. It is now
+// a SAMPLED path-distance test, which introduces the opposite hazard: two runs
+// meeting at a joint NECESSARILY approach within a bore radius -- that is what a
+// joint is -- so without an exemption the check rejects every tee in the library.
+// Both directions are asserted here; the negative cases live in tests/guards/.
+
+JK = ut_round(od = 30, id = 26);
+LN = ut_round(od = 12, id = 8);
+
+// Correctly grouped: no comparison happens at all, offset or not.
+assert(ut_check_net(ut_net([
+           ut_run("j", ut_polyline([ [ 0, 0, 0 ], [ 200, 0, 0 ] ]), JK, group = 0),
+           ut_run("l", ut_polyline([ [ 70, 0, 0 ], [ 130, 0, 0 ] ]), LN, group = 1),
+       ])),
+       "a correctly grouped jacket validates whether or not the liner is offset");
+
+// THE EXEMPTION, and it is load-bearing rather than decorative. A BIG trunk whose
+// bore comfortably contains a small branch satisfies the nesting precondition,
+// and the branch's centreline enters that bore by design. Verified: removing the
+// exemption makes exactly this case fail.
+bigtee = ut_net(
+    [
+        ut_run("trunk", ut_polyline([ [ -60, 0, 0 ], [ 60, 0, 0 ] ]), ut_round(od = 40, id = 34)),
+        ut_run("branch", ut_polyline([ [ 0, 0, 0 ], [ 0, 60, 0 ] ]), LN),
+    ],
+    [ut_joint([ [ "trunk", [ "s", 60 ] ], [ "branch", "a" ] ])]);
+assert(ut_check_net(bigtee), "a branch that FITS inside its trunk's bore and is JOINED to it must not trip NET-5");
+
+// And the 4-into-1 manifold, five runs meeting at one node, still validates.
+assert(ut_check_net(man), "the manifold must not trip NET-5 either");
+
 cube(0.001); // sentinel
