@@ -7,12 +7,17 @@
 // without adding list-comprehension-demos, which has been dormant since 2022 and
 // ships with NO LICENCE FILE AT ALL.
 //
-// HONEST COST, stated rather than discovered: a `P` segment forfeits exact
-// arclength, exact transport and the bend-radius check. That is the price of an
-// arc-native IR, and users whose primary case is organic paths should know the
-// design is optimised against them. The honest upgrade is a BIARC FITTER --
-// approximate each span by a pair of tangent-continuous arcs to a tolerance,
-// emitting real ["A"] segments and restoring all three. PLAN.md §10.
+// HONEST COST, measured rather than asserted. A `P` segment gives up:
+//   * exact arclength -- 0.025% at n=160, i.e. 0.19 mm on a 758 mm helix, and
+//     `s` is only ever used as a RATIO so a uniform shrink cancels exactly;
+//   * exact transport -- 0.04 deg of end-normal error, clean second order;
+//   * exact CHECK-1 -- now estimated from discrete curvature instead
+//     (src/ut_check.scad), accurate but it FAILS OPEN;
+//   * RESOLUTION INDEPENDENCE -- `n` is baked into the spine, so $fa and $fs are
+//     inert here. This is the real cost, and it is a stated limit on SPINE-5.
+// A biarc fitter would close the last of those and only tighten the first three.
+// It exists and works (spikes/biarc_fitter.scad) and is deliberately not built:
+// BACKLOG.md §3 has the measurements.
 
 // clang-format off
 use <../ut_core.scad>;

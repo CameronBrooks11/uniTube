@@ -20,7 +20,7 @@ The subtraction happens **once per group, after all unions in that group**, so B
 shell cannot seal A's lumen: B's shell is unioned before A's bore is cut, and A's
 bore always wins.
 
-This is the inherited TODO at `reference/jantecnl/curvedPipe-4-into-1.scad:78-83`,
+This is the inherited TODO from the 2023 prototype (removed with `reference/jantecnl/`; see `docs/salvage.md` §4 and the git history),
 promoted from a comment to an architectural invariant. It already ships in this
 repository, in the wrong file, as `reference/doommeister/Round_Ducting_V1.1.scad:168`
 (`middle_tee_n`) — working, on real geometry, hardcoded to straight radial branches.
@@ -71,6 +71,17 @@ CGAL still reporting `Simple: yes`.
 
 `NET-5` refuses an assembly where two runs that can nest share a group, and names
 the fix.
+
+> **`NET-5` has a measured blind spot, and it is not small.** The test compares
+> ENDPOINTS only. Slide a liner 70 mm along a jacket so they share no endpoint and
+> it is invisible: measured, **3733.3 mm³ lost — exactly 100% of the liner, 9.6%
+> of the assembly** — with `ut_check_net` returning `true` and CGAL reporting
+> `Simple: yes`. Declare the group correctly; the check will not save you here.
+>
+> The obvious fix — sample both paths and compare distances — **false-positives
+> on every tee**, because two runs meeting at a joint necessarily approach within
+> a bore radius. That is what a joint *is*. A correct version has to exempt pairs
+> sharing a joint, and that is deferred rather than guessed at (`BACKLOG.md` §4).
 
 ## Joint bodies
 

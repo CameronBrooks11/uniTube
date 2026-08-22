@@ -64,7 +64,7 @@ Every historical geometry bug in this repository, and both of the bugs found in
 | `SPINE-2` | contiguity — each segment ends where the next begins, to 1e-6 |
 | `SPINE-3` | tangent continuity everywhere. There is no G0 / mitre case (ADR 0004) |
 | `SPINE-4` | non-degenerate: lines have length, arcs have `0 < ang ≤ 180` |
-| `SPINE-5` | no roll, no resolution. Two paths tracing the same curve differ only in provenance |
+| `SPINE-5` | no roll. **No resolution for `L` and `A`** — see the caveat below |
 | `SPINE-6` | a spine is a STRAND, not a graph. Branching lives in the network (Phase 3) |
 | `STATION-1` | no two consecutive positions coincide — the unconditional dedupe |
 | `STATION-2` | orthonormal frames, right-handed, det +1, no scale or shear |
@@ -72,6 +72,25 @@ Every historical geometry bug in this repository, and both of the bugs found in
 | `STATION-4` | `s[0] = 0`, strictly increasing, `s[last] = ut_length(path)` |
 | `STATION-5` | bounded turn between consecutive tangents |
 | `STATION-6` | continuous roll — the frame never flips |
+
+### `SPINE-5` and sampled segments — a stated limit
+
+`SPINE-5` holds fully for `L` and `A` segments: they are exact, and `$fa`/`$fs`
+decide the station count at compile time.
+
+**It does not hold for `P`.** `ut_curve` bakes its `n` into the spine, and the
+resolution knobs are inert on the result:
+
+| path | `$fa=24, $fs=4` | `$fa=0.5, $fs=0.1` |
+|---|---|---|
+| arc-based (`ut_polyline`, `ut_turtle`) | 7 stations | 183 stations |
+| sampled (`ut_curve`) | **161** | **161** |
+
+This is recorded rather than fixed. Closing it means fitting arcs to the samples
+— see `spikes/biarc_fitter.scad`, which exists and works — and that is deferred
+(`BACKLOG.md` §3). Resolution independence is the one argument that genuinely
+justifies building it; the arclength and transport arguments do not survive
+measurement.
 
 ## Frame policy
 

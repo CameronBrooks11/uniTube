@@ -85,3 +85,16 @@ beyond 180° into two arcs (`SPINE-4`), and deduping coincident samples before
 building a `P` segment (`STATION-1`).
 
 **The spine stays.**
+
+## Known limit, recorded 2026-08-21
+
+`SPINE-5` says the IR carries no roll and no resolution. The roll half holds
+everywhere — `ut_turtle`'s `roll` command proved it above. **The resolution half
+does not hold for `P` segments:** `ut_curve` bakes its sample count into the
+spine, and `$fa`/`$fs` are inert on the result (measured: 161 stations at both
+`$fa=24` and `$fa=0.5`, where an arc path gives 7 and 183).
+
+`docs/ir.md` now states this as a limit rather than claiming the invariant. The
+fix is a biarc fitter, which exists as a working prototype in
+`spikes/biarc_fitter.scad` and is deliberately not built — see `BACKLOG.md` §3
+for the measurements that demoted it.

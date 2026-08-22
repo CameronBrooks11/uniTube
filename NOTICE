@@ -35,14 +35,6 @@ reference/makrokaba/         BSD-3-Clause
     Cameron Brooks. Full licence text is in each file header. This is the
     requirements checklist for a future, separate terminations library.
 
-reference/jantecnl/          NO LICENCE STATED
-    curvedPipe-4-into-1.scad, derived from a personal blog post
-    (jantecnl.synology.me) that carries no licence statement of any kind.
-    Retained ONLY because it is the historical record of the 4-into-1 manifold
-    that drives this project's acceptance test. Its GEOMETRY (the run
-    coordinates) is used as a test fixture; none of its code is carried forward.
-    If its provenance is ever contested, deleting this directory costs nothing.
-
 reference/proto/             owner-written experiments, no external code.
 
 
@@ -52,6 +44,12 @@ reference/proto/             owner-written experiments, no external code.
     while writing src/ut_mesh.scad. DO NOT. `just lint` blocks `use <>` from
     reference/, but it cannot detect copy-paste. Read for understanding; write
     from the geometry. The same applies to reference/doommeister/.
+
+    NOTE: reference/jantecnl/ was REMOVED on 2026-08-21. It carried no licence
+    statement of any kind, having come from a personal blog post. Only its run
+    coordinates were ever used, and those now live in examples/06_manifold_4into1
+    as first-party geometry. The historical record is in docs/salvage.md and in
+    the git history.
 
     reference/axford/libs/vector.scad is GPL and was `use <>`d by every core
     file in the pre-2026 layout. OpenSCAD's `use <>` is source-level inclusion
