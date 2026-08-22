@@ -142,7 +142,13 @@ cgal:
         > "{{OUT}}/cgal/$b.wrap.scad"
       log="{{OUT}}/cgal/$b.log"
       openscad --hardwarnings -o "{{OUT}}/cgal/$b.stl" "{{OUT}}/cgal/$b.wrap.scad" >"$log" 2>&1 || true
-      if grep -q 'Simple: *yes' "$log"; then
+      # "Simple: yes" alone is NOT a pass -- AGENTS.md says so, and this recipe
+      # did not implement its own rule. Measured: a self-intersecting run logs
+      # BOTH "CGAL ERROR: assertion violation!" and "Simple: yes", openscad
+      # exits 0, and this reported ok.
+      if grep -qiE 'CGAL error|assertion violation|Unable to convert|not.*valid 2-manifold' "$log"; then
+        echo "  FAIL $b  (CGAL raised an error)"; grep -iE 'CGAL error|assertion violation|Unable to convert' "$log" | head -2 | sed 's/^/       /'; fail=1
+      elif grep -q 'Simple: *yes' "$log"; then
         echo "  ok  $b  $(grep -m1 'Volumes:' "$log" | tr -s ' ')"
       else
         echo "  FAIL $b"; grep -iE 'Simple|not.*valid|ERROR' "$log" | head -3 | sed 's/^/       /'; fail=1

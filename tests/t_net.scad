@@ -92,4 +92,18 @@ mj = ut_net_joints(man)[0];
 assert(len(ut_joint_incident(mj)) == 5, "five incident ends");
 assert(abs(ut_joint_shell_r(man, mj) - 8) < 1e-9, "shell radius = the trunk's od/2, the largest incident reach");
 
+// ============================================ the port frame IS the swept frame
+// ut_ports() used to call _ut_end_station with the DEFAULT opts, while
+// ut_assemble sweeps with concat(opts, ut_run_opts(r)). Measured before the fix:
+// a run carrying opts=[["twist",90]] reported a port normal 90 degrees from the
+// geometry it would be bolted to -- silently, exit 0. A port carrying a FRAME
+// rather than a diameter is the entire premise of ADR 0005.
+tw = ut_run("tw", ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ] ]), prof, opts = [[ "twist", 90 ]]);
+twnet = ut_net([tw]);
+pb2 = ut_port_named(twnet, "tw.b");
+swept = ut_stations(ut_polyline([ [ 0, 0, 0 ], [ 60, 0, 0 ] ]), [[ "twist", 90 ]]);
+assert(ut_turn(ut_port_normal(pb2), ut_st_n(swept[len(swept) - 1])) < 1e-9,
+       str("the port frame must equal the frame actually swept; skew was ",
+           ut_turn(ut_port_normal(pb2), ut_st_n(swept[len(swept) - 1])), " deg"));
+
 cube(0.001); // sentinel

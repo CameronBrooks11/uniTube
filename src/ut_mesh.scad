@@ -17,6 +17,18 @@ use <ut_port.scad>;
 use <ut_check.scad>;
 // clang-format on
 
+// The region a `part` selects. --hardwarnings catches an unknown named ARGUMENT
+// (the torusSlice bug class) but NOT an unknown VALUE, so an unguarded else here
+// meant ut_tube(part="wall") silently rendered the BORE -- measured, a solid rod
+// of the lumen, exit 0, no warning.
+function ut_part_rgn(prof, part) = assert(part == "solid" || part == "shell" || part == "bore",
+                                          str("ut_tube(): part must be \"solid\", \"shell\" or \"bore\", got \"", part,
+                                              "\"")) part
+                                           == "solid"
+                                       ? ut_solid_rgn(prof)
+                                   : part == "shell" ? ut_shell_rgn(prof)
+                                                     : ut_bore_rgn(prof);
+
 // Place a profile-local point into a station frame: p + x*n + y*b.
 // +X is the station's roll-reference normal, +Y its binormal. That convention is
 // what makes "the seam faces up" mean something.
@@ -97,7 +109,7 @@ module ut_tube(path, prof, part = "solid", opts = [])
 {
     assert(ut_check(path, prof));
     sts = ut_stations(path, opts);
-    rgn = part == "solid" ? ut_solid_rgn(prof) : part == "shell" ? ut_shell_rgn(prof) : ut_bore_rgn(prof);
+    rgn = ut_part_rgn(prof, part);
     assert(len(rgn) > 0, str("ut_tube(): part=\"", part, "\" is empty for this profile"));
     ut_sweep(rgn, sts, ut_closed(path), ut_prof_open(prof) && part == "solid");
 }
@@ -105,9 +117,7 @@ module ut_tube(path, prof, part = "solid", opts = [])
 // The mesh volume of a run, without rendering it. Used by tests/t_mesh.scad to
 // catch the silent-material-loss class that CGAL's "Simple: yes" does not.
 function ut_run_volume(path, prof, part = "solid", opts = []) = let(sts = ut_stations(path, opts),
-                                                                    rgn = part == "solid"   ? ut_solid_rgn(prof)
-                                                                          : part == "shell" ? ut_shell_rgn(prof)
-                                                                                            : ut_bore_rgn(prof))
+                                                                    rgn = ut_part_rgn(prof, part))
     ut_volume(ut_mesh_points(rgn, sts, ut_closed(path)),
               ut_mesh_faces(rgn, sts, ut_closed(path), ut_prof_open(prof) && part == "solid"));
 

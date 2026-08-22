@@ -82,9 +82,20 @@ function ut_profile(outer, inner = undef, meta = []) = assert(len(outer) >= 3,
             assert(
                 is_undef(inner) || _ut_aligned(outer, inner),
                 "PROF-2: outer and inner loops must be ANGLE-ALIGNED index-for-index. Sampling a bore by perimeter instead of by angle self-intersects the end caps, and CGAL reports only an assertion violation. See ADR 0006.")
-                ["utprof", outer, inner, meta];
+                assert(
+                    is_undef(inner) || _ut_contained(outer, inner),
+                    "PROF-1: the inner loop must lie strictly INSIDE the outer loop at every angle. An inner loop that escapes the outer produces an inside-out mesh with negative volume, which ut_check cannot see.")
+                    ["utprof", outer, inner, meta];
 
 // PROF-2 correspondence: outer[i] and inner[i] must sit at the same polar angle.
+// PROF-1 containment. Because PROF-2 guarantees both loops are sampled at the
+// SAME angles, containment reduces to a per-index radius comparison -- exact,
+// and it does not reject a legitimate non-circular section the way comparing
+// global max/min radii would. Without this, ut_profile accepted an inner loop
+// OUTSIDE the outer one: measured, an inside-out mesh of volume -3105.83 that
+// ut_check happily returned true for.
+function _ut_contained(o, i) = min([for (k = [0:len(o) - 1]) norm(o[k]) - norm(i[k])]) > ut_eps();
+
 function _ut_aligned(o, i) = max([for (k = [0:len(o) - 1])
                                      abs(_ut_dang(atan2(o[k][1], o[k][0]), atan2(i[k][1], i[k][0])))]) < 1e-6;
 function _ut_dang(a, b) = let(d = a - b) d - round(d / 360) * 360;
