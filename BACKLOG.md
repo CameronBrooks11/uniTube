@@ -1,8 +1,9 @@
 # uniTube — work queue
 
-**Status:** proposed, for review. Nothing changed. `PLAN.md` is the architecture;
-this is what to do next and in what order.
-**Date:** 2026-08-21 · v1 core complete (`PLAN.md` §12) · **PR #4 still open**
+**Status:** **Tiers 0-4 complete and merged** (2026-08-21). `PLAN.md` is the
+architecture; this is the record of what was found and what was done about it.
+The queue below is kept as written, annotated with outcomes.
+**Date:** 2026-08-21 · v1 core complete (`PLAN.md` §12) · PRs #4-#9 merged
 
 Produced by a 5-agent review (independent gap audit, biarc design, release
 readiness, sequencing, adversarial challenge) and then re-verified. **Every
@@ -260,7 +261,7 @@ the tag is the commitment.
 
 ---
 
-## 6. Decisions I need from you
+## 6. Decisions — all settled, all acted on
 
 1. **Closed paths — wire up or delete?** *(recommend: wire up, minimally.)*
    ~80% built and **verified working** — a closed 4-arc torus gives exact length
@@ -305,3 +306,33 @@ it), and `1.0.0`.
 
 Reasoning for each is in `PLAN.md` §10 and unchanged — except biarc, whose
 reasoning is corrected in §3 above.
+
+
+---
+
+## 8. Outcome
+
+All five tiers merged as PRs #5-#9. `main` is green on `check`, `test`, `cgal`,
+`warnings` and `partspec`, and **CI now runs all five on every push** (1m34s).
+
+| tier | what shipped |
+|---|---|
+| 0 | Five silent-wrong-geometry bugs closed, plus the `cgal` gate that hid them. Each reproduced first, each held by a guard built from that reproduction. |
+| 1 | `ut_curve`'s end tangents made second order (**2.237° → 0.0141°** at n=160, one line) and CHECK-1 extended to sampled paths via discrete curvature. |
+| 2 | Documents made true: `SPINE-5` recorded as a limit rather than claimed, biarc billing corrected, NET-5's blind spot documented, README fixed. Three first-use guards in `ut_polyline`. `reference/jantecnl/` deleted. Biarc prototype preserved in `spikes/`. |
+| 3 | Closed paths reachable through `ut_spine`, with the STATION-7 duplicate-station fix: **88 degenerate triangles → 0**. |
+| 4 | CI, the warning tier under a gate, five previously untested asserts guarded (including **NET-2**), dead code removed, `docs/README.md`. |
+
+**Guards: 17 → 31.** Every one is watched to fail before it is trusted.
+
+### What remains, unchanged
+
+Everything in §7, plus:
+
+- **NET-5's blind spot** — documented, not fixed. Exempting joint-sharing pairs
+  is the known-correct approach; it is deferred rather than guessed at (§4).
+- **Biarc fitting** — deferred with its billing corrected (§3). The prototype is
+  at `spikes/biarc_fitter.scad` with the measurements that demoted it. The one
+  argument that would justify building it is resolution independence, now
+  recorded as a stated limit on `SPINE-5` in `docs/ir.md`.
+- **A release tag** — deliberately not taken. To be discussed.
