@@ -62,6 +62,27 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
   directive, so `frontend/`'s `../` imports survive being included from `src/`.
 - **`use` does not export top-level VARIABLES either.** Every shared constant in
   this library is a zero-argument function (`ut_eps()`, `ut_up()`).
+- **…but the used file's own functions and modules still SEE its top-level
+  values.** They close over the defining file's scope. A name that file leaves
+  *unset* is dynamically scoped from the call site, and an explicit `$x =`
+  argument at the call site beats both. Pinned in `tests/t_scoping.scad`:
+
+  | | value seen |
+  |---|---|
+  | function in a file that sets `$fa = 8`, called with `$fa = 30` | **8** |
+  | function in a file that sets nothing, called with `$fa = 30` | **30** |
+  | either, called as `f($fa = 77)` | **77** |
+
+  This is why `src/` sets no `$fa`/`$fs`/`$fn` anywhere — so the library takes
+  the consumer's resolution — while `examples/` set theirs at top level and
+  therefore render at the authored resolution however they are invoked. Getting
+  this backwards cost a wrongly-filed bug against a gate that was already right.
+- **A polygon's inradius is not its vertex radius.** `ut_ring()` puts points
+  exactly on the nominal circle, so `min(norm(q))` returns the nominal radius at
+  every resolution while the inscribed circle is `r·cos(180/n)`. Use
+  `ut_inradius()` for anything that must FIT INSIDE, and `ut_prof_reach()` for
+  anything that must REACH. A sphere loses the factor twice —
+  `ut_sphere_inradius()`, verified exact against the emitted mesh for n ≥ 8.
 - **`assert` messages are evaluated EAGERLY**, even when the condition passes.
   `assert(is_num(r) || ..., str("...", len(r)))` warns on a scalar `r` because
   the message runs regardless. Keep messages free of calls that can fail.

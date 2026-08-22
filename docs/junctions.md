@@ -105,6 +105,28 @@ Two limits worth knowing:
 Both radii are **measured from the incident profiles**, never assumed from `od`,
 so an arbitrary hollow section works without a special case.
 
+### Both spheres are faceted, and `NET-4` measures the wall between the facets
+
+The outer ball's nearest **face** sits well inside its vertices, and the inner
+ball's vertices reach the full core radius. Comparing the two *radii* treats both
+as smooth spheres and overstates the wall by exactly the amount that matters.
+
+Measured on two `od=20 id=17` runs meeting at a joint, at `$fn=5`: the radii say
+a 3.1 mm wall, the facets say **−0.33 mm**, and there is a hole punched clean
+through the junction — rendering `Simple: yes, Volumes: 2` with every gate green.
+
+`NET-4` now compares `ut_sphere_inradius(shell_r)` against `core_r`.
+`ut_sphere_inradius` is `r·cos(180/n)²` — a sphere loses the faceting factor
+twice, once per direction — verified **exact** against the emitted mesh for
+n ≥ 8 and conservative below it. Failing low is the safe direction for anything
+that must fit inside the result.
+
+The same mistake sized the core sphere itself: `ut_bore_inradius` used to return
+`min(norm(q))` over the bore's **vertices**, which `ut_ring()` places exactly on
+the nominal circle — so it returned `id/2` at every resolution while the real
+inscribed radius is `id/2·cos(180/n)`. It uses `ut_inradius()` now, which
+measures to the **edges**.
+
 ## What v1 explicitly does not do
 
 Stated loudly rather than discovered:
@@ -117,7 +139,8 @@ Stated loudly rather than discovered:
   base to be a plane, sphere, straight cylinder or straight prism. For a library
   whose premise is curved paths this is the binding constraint.
 - **Thin walls at a shallow crotch are not fixed.** Generous ball sizing and a
-  `NET-4` warning are all v1 offers.
+  `NET-4` warning are all v1 offers. `NET-4` does now measure the ball's wall
+  between facets rather than between radii, so it is resolution-aware.
 - **Mid-run landings** (`["s", x]`) work with `"ball"` and `"none"` only.
 
 ## Cost
@@ -141,7 +164,7 @@ Every silent failure this design was reviewed against reported `Simple: yes`:
 
 So the gate is tiered (`docs/verification.md`), and the two that matter here are:
 
-- **`ut_check_net`** — `NET-1..5`, analytic, on the IR as pure data, no rendering.
+- **`ut_check_net`** — `NET-0..6`, analytic, on the IR as pure data, no rendering.
 - **`checks/`** — declared engineering intent, verified with
   [partspec](https://github.com/CameronBrooks11/partspec). `keep_out` regions down
   each lumen assert patency directly, with a mandatory anti-vacuity shell so a
