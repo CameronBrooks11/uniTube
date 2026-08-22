@@ -70,7 +70,7 @@ just            # list recipes
 just setup      # verify the toolchain (there is nothing to install)
 just check      # CI equivalent: fmt-check + lint + render everything warning-free
 just test       # the assert-only subset
-just verify     # slow: forced-CGAL manifoldness
+just verify     # slow: forced-CGAL manifoldness + the partspec contracts
 ```
 
 ## Credits
