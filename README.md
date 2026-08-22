@@ -6,14 +6,19 @@ A **path compiler and a hollow-network assembler**: many ways to describe a tube
 centreline, all compiled down to one canonical form, swept as a single polyhedron,
 and assembled into branching networks whose bores stay open.
 
-> **Status: v1 core complete — path, profile, and network.** Four frontends
-> compile to one canonical spine, sweep as a single polyhedron, and assemble into
-> branching hollow networks whose bores stay open. See [`docs/`](docs/) for the
-> architecture and the decisions, and
+> **Status: `v0.1.0` — the core is complete and gated: path, profile, network.**
+> Four frontends compile to one canonical spine, sweep as a single polyhedron,
+> and assemble into branching hollow networks whose bores stay open. See
+> [`docs/`](docs/) for the architecture and the decisions, and
 > [issues](https://github.com/CameronBrooks11/uniTube/issues) for what is next.
 >
-> Not yet shipped, deliberately: terminations (a separate library), junction
-> fillets, profile variation. Not yet tagged.
+> **`0.x` on purpose.** The geometry is verified, but the API has not yet been
+> used by anything outside this repository, and the first real consumer usually
+> finds something. Names and argument shapes may still move; the invariants in
+> [`docs/ir.md`](docs/ir.md) are the part meant to be stable.
+>
+> Not shipped, deliberately: terminations (a separate library), junction
+> fillets, profile variation, multi-lumen sections.
 
 ## Why
 
@@ -73,10 +78,13 @@ docs/        the IR, frames, profiles, junctions, and ADRs
 ```sh
 just            # list recipes
 just setup      # verify the toolchain (there is nothing to install)
-just check      # CI equivalent: fmt-check + lint + render everything warning-free
+just check      # CI equivalent: fmt-check + lint + guards + warnings + preview
 just test       # the assert-only subset
 just verify     # slow: forced-CGAL manifoldness + the partspec contracts
 ```
+
+What each gate is for, and why `Simple: yes` proves almost nothing, is in
+[`docs/verification.md`](docs/verification.md).
 
 ## Credits
 
