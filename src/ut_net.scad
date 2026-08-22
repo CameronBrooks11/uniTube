@@ -87,9 +87,17 @@ function ut_net_run(net, name) = let(hit = [for (r = ut_net_runs(net)) if (ut_ru
 
 // =============================================================== geometry helpers
 
-// The largest sphere that fits inside a profile's bore, and the farthest the
-// outer surface reaches. Both measured from the OUTLINE, never assumed from od.
-function ut_bore_inradius(prof) = ut_prof_hollow(prof) ? min([for (q = ut_prof_inner(prof)) norm(q)]) : 0;
+// The largest sphere that fits inside a profile's bore -- measured to the bore's
+// EDGES (ut_inradius), not to its vertices.
+//
+// This used to take min(norm(q)) over the vertices, which is the CIRCUMradius.
+// ut_ring() places every point exactly on the nominal circle, so that returned
+// id/2 at every resolution while the real inscribed radius is id/2*cos(180/n).
+// The joint's subtracted core sphere is sized from this, so overstating it cut
+// further than the bore it is meant to stay inside: measured on two od=20 id=17
+// runs at $fn=5, a 0.410 mm hole straight through the trunk wall, with NET-4
+// silent and CGAL reporting Simple: yes.
+function ut_bore_inradius(prof) = ut_prof_hollow(prof) ? ut_inradius(ut_prof_inner(prof)) : 0;
 
 // The station at one end of a run, and the outward direction there.
 function _ut_end_station(run, end, opts = []) = let(sts = ut_stations(ut_run_path(run), opts), N = len(sts)) end == "a"
@@ -275,17 +283,28 @@ function _ut_net3(net) =
 
 // NET-4 — the ball's own wall. A core sphere as large as the shell sphere leaves
 // no material at all and opens the junction to the outside.
-function _ut_net4(net) = let(
-    bad = [for (j = ut_net_joints(net)) if (ut_joint_body(j) == "ball" &&
-                                            ut_joint_shell_r(net, j) - ut_joint_core_r(net, j) <= ut_eps())
-            str("joint at ", ut_joint_node(net, j))],
-    thin = [for (j = ut_net_joints(net)) if (ut_joint_body(j) == "ball")
-            let(w = ut_joint_shell_r(net, j) - ut_joint_core_r(net, j)) if (w > ut_eps() && w < ut_min_wall())
-                str(ut_joint_node(net, j), " wall ", w)])
-    assert(len(bad) == 0, str("NET-4: joint ball has no wall at ",
-                              bad))(len(thin) == 0 ? true
-                                                   : echo(str("WARNING [uniTube] NET-4: joint ball wall is below the ",
-                                                              ut_min_wall(), " mm minimum at ", thin)) true);
+// The ball's wall is measured FACET TO FACET, not radius to radius. Both spheres
+// are faceted, and comparing shell_r to core_r treats them as smooth: the outer
+// ball's nearest face sits at ut_sphere_inradius(shell_r), well inside its
+// vertices, while the inner ball's vertices reach the full core_r. Measured on
+// two od=20 id=17 runs at $fn=5, that mismatch hid a hole punched clean through
+// the junction -- the radii said a 3.1 mm wall, the facets said -0.33 mm, and
+// CGAL reported Simple: yes.
+function _ut_net4(net) = let(bad = [for (j = ut_net_joints(net)) if (
+                                 ut_joint_body(j) == "ball" &&
+                                 ut_sphere_inradius(ut_joint_shell_r(net, j)) - ut_joint_core_r(net, j) <= ut_eps())
+                                     str("joint at ", ut_joint_node(net, j), " (outer ball reaches ",
+                                         ut_sphere_inradius(ut_joint_shell_r(net, j)),
+                                         " at its nearest facet, core sphere is ", ut_joint_core_r(net, j), ")")],
+                             thin = [for (j = ut_net_joints(net)) if (ut_joint_body(j) == "ball")
+                                     let(w = ut_sphere_inradius(ut_joint_shell_r(net, j)) -
+                                             ut_joint_core_r(net, j)) if (w > ut_eps() && w < ut_min_wall())
+                                         str(ut_joint_node(net, j), " wall ", w)])
+    assert(len(bad) == 0, str("NET-4: the joint ball has no wall at ", bad,
+                              ". This is resolution-dependent: raise $fn, or thicken the wall."))(
+        len(thin) == 0 ? true
+                       : echo(str("WARNING [uniTube] NET-4: joint ball wall is below the ", ut_min_wall(),
+                                  " mm minimum at ", thin)) true);
 
 // NET-5 — LUMEN GROUPS. With one global difference over the whole assembly, a
 // coaxial jacket's outer bore swallows the inner tube entirely: measured, 26% of
