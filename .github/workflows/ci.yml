@@ -24,7 +24,7 @@ jobs:
       # else stays headless under this.
       QT_QPA_PLATFORM: offscreen
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install the toolchain
         run: |
@@ -45,7 +45,7 @@ jobs:
         # same instinct as --hardwarnings: make the silent case loud.
         run: openscad --version 2>&1 | grep -q '2021.01'
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
@@ -68,7 +68,7 @@ jobs:
 
       - name: Keep the evidence when the gate fails
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: out
           path: out/
