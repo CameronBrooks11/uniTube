@@ -10,6 +10,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   gate:
     # PINNED, not ubuntu-latest. Noble ships openscad 2021.01, which is exactly
