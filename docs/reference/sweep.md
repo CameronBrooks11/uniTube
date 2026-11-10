@@ -27,8 +27,13 @@ polyhedron, with no CSG.
 | `ut_mesh_points(rgn, sts, closed = false)` | the vertex list |
 | `ut_mesh_faces(rgn, sts, closed = false, open = false)` | the face list. Every face is a triangle. |
 
-`ut_mesh_points` and `ut_mesh_faces` are what `polyhedron()` receives. With
-`ut_volume` they let a test measure a mesh as data:
+`ut_mesh_faces` winds each face counter-clockwise seen from outside, so the
+right-hand rule gives the outward normal and `ut_volume` is positive.
+`polyhedron()` wants the opposite, clockwise from outside, and `ut_sweep`
+reverses every face as it emits. If you call `polyhedron()` on these yourself,
+reverse them too: `[for (f = faces) [f[2], f[1], f[0]]]`.
+
+With `ut_volume` they let a test measure a mesh as data:
 
 ```scad
 sts = ut_stations(path);

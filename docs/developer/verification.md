@@ -18,9 +18,7 @@ wrong. Every gate in this repository is shaped by this table.
 > **Known issue ([#38](https://github.com/CameronBrooks11/uniTube/issues/38)).**
 > Everything here is measured on 2021.01, the version CI pins. On 2026.10.15
 > `tests/t_scoping.scad` fails and `just cgal` cannot pass, because that version
-> prints no `Simple: yes` line. Worse, its Manifold backend exposes that the
-> swept polyhedra are wound inside-out, and networks export wrong there
-> ([#40](https://github.com/CameronBrooks11/uniTube/issues/40)).
+> prints no `Simple: yes` line.
 
 | command | exit |
 |---|---|
@@ -53,6 +51,9 @@ and neither is visible from a green build:
    validated in preview, so "renders clean" is not evidence of a valid solid.
    Plus this library's own `ut_volume()`, which agrees with analytic values to 6
    significant figures, so volume bands can be tight. `just cgal`.
+   `just check` also measures the **signed volume of every exported mesh**
+   (`tools/stl_volume.py`) and fails on a negative one. CGAL cannot stand in for
+   that: it repairs an inside-out polyhedron in any boolean and says nothing.
 5. **Preview correctness** — `just preview`. Renders each example through
    **OpenCSG**, not CGAL, and fails if a closed part shows back faces. See below.
    Known issue ([#37](https://github.com/CameronBrooks11/uniTube/issues/37)):

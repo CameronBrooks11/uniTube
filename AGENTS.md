@@ -111,6 +111,14 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
   the wrong cause: `unknown command "undef"`.
 - **Swept quads are non-planar.** Emit triangles, or OpenSCAD prints "PolySet has
   nonplanar faces. Attempting alternate construction" and guesses the topology.
+- **`polyhedron()` wants faces CLOCKWISE seen from outside**, the opposite of the
+  right-hand rule that makes a divergence-theorem volume positive. An inside-out
+  polyhedron renders, previews and passes CGAL here, because CGAL repairs the
+  orientation in any boolean; it exports with every normal reversed, and on a
+  Manifold-backend OpenSCAD `difference()` then subtracts NOTHING. `ut_sweep()`
+  converts in one place (`_ut_cw`), and `just check` measures the sign of every
+  exported mesh. Measured before the fix: an elbow of +5865.23 mm3 exported as
+  -5865.23.
 
 ## Toolchain
 

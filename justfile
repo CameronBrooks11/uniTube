@@ -182,11 +182,21 @@ check: fmt-check lint guards warnings preview
       # OpenSCAD exits 0 — that is the exact bug class that broke this library
       # for 19 months (see docs/developer/verification.md). Never drop this flag.
       # The target MUST be .stl: with -o *.csg a failing assert() exits 0.
-      openscad --hardwarnings -o "{{OUT}}/check/$(basename "${f%.scad}").stl" "$f" 2>&1 \
+      stl="{{OUT}}/check/$(basename "${f%.scad}").stl"
+      rm -f "$stl"
+      openscad --hardwarnings -o "$stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "CHECK FAIL: $f"; exit 1; }
+      # THE EXPORTED MESH MUST NOT BE INSIDE-OUT. A polyhedron() wound the wrong
+      # way round renders, previews and passes CGAL on 2021.01, which repairs the
+      # orientation in any boolean -- and exports with every normal reversed. On
+      # a Manifold-backend OpenSCAD difference() then subtracts nothing at all.
+      # An empty or non-numeric answer is a failure, not a pass: v+0 is 0.
+      vol=$(python3 tools/stl_volume.py "$stl") || { echo "CHECK FAIL: $f  (could not measure $stl)"; exit 1; }
+      awk -v v="$vol" 'BEGIN{exit !(v+0 > 0)}' \
+        || { echo "CHECK FAIL: $f  exported volume is $vol mm3, not positive -- the mesh is INSIDE-OUT"; exit 1; }
       n=$((n+1))
     done < <(find examples tests -maxdepth 1 -name '*.scad' 2>/dev/null | sort)
-    echo "check ok ($n file(s) rendered warning-free)"
+    echo "check ok ($n file(s) rendered warning-free, every exported mesh right way out)"
 
 # The assert-only subset. Fast: these files render nothing of consequence.
 test:

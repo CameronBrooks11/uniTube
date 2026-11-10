@@ -18,9 +18,6 @@ ut_assemble(ut_net([trunk, branch],
                    [ut_joint([["trunk", ["s", 50]], ["branch", "a"]])]));
 ```
 
-> **Known issue ([#40]).** Networks are only correct on OpenSCAD 2021.01. On
-> newer versions that use the Manifold backend the bores are not cut.
-
 ## Runs, joints, nets
 
 ```scad
@@ -205,4 +202,3 @@ with [partspec](https://github.com/CameronBrooks11/partspec). See
 [#34]: https://github.com/CameronBrooks11/uniTube/issues/34
 [#35]: https://github.com/CameronBrooks11/uniTube/issues/35
 [#36]: https://github.com/CameronBrooks11/uniTube/issues/36
-[#40]: https://github.com/CameronBrooks11/uniTube/issues/40

@@ -60,8 +60,8 @@ invisible on a round tube. `examples/12_section_view.scad`.
 
 ## Requirements
 
-OpenSCAD 2021.01. Newer versions are not supported yet
-([#40](https://github.com/CameronBrooks11/uniTube/issues/40)). **Nothing else** — uniTube has no dependencies and a
+OpenSCAD 2021.01, the version it is tested on
+([#38](https://github.com/CameronBrooks11/uniTube/issues/38)). **Nothing else** — uniTube has no dependencies and a
 fresh clone renders immediately.
 
 ## Layout

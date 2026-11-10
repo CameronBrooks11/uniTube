@@ -211,3 +211,29 @@ The same mistake sized the core sphere itself: `ut_bore_inradius` used to return
 the nominal circle — so it returned `id/2` at every resolution while the real
 inscribed radius is `id/2·cos(180/n)`. It uses `ut_inradius()` now, which
 measures to the **edges**.
+
+## 9. Every swept solid was inside-out
+
+`ut_mesh_faces()` winds its faces counter-clockwise seen from outside, which is
+what makes `ut_volume()` positive. `polyhedron()` wants clockwise. The faces
+were passed straight through, so every swept solid was inside-out from the
+first commit of the rewrite.
+
+Nothing on OpenSCAD 2021.01 showed it, because CGAL repairs the orientation in
+any boolean: every network rendered, measured and passed its contracts. Only a
+plain `ut_tube()` gave it away, exporting −5865.23 mm³ for an elbow whose
+volume is +5865.23, and no gate measured an exported mesh.
+
+On a Manifold-backend OpenSCAD the boolean does not repair it, and
+`difference()` subtracts nothing. Measured on 2026.10.15 before the fix:
+
+| example | 2021.01 | 2026.10.15 |
+|---|---|---|
+| `10_tee_wall_landing` | +13716.23, 1834 triangles | −43095.99, 12920 triangles |
+| `06_manifold_4into1` | +24424.92, 7920 triangles | −61109.14, 42400 triangles |
+| `08_coaxial_jacket` | +24106.02, 4980 triangles | −174446.16, 9688 triangles |
+
+It was found by looking at a picture: the documentation images rendered on the
+newer version showed the open ends of all three networks capped. `ut_sweep()`
+now reverses the faces where it emits them, and `just check` measures the sign
+of every exported mesh. After the fix the two versions agree on all three.

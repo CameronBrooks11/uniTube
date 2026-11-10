@@ -19,8 +19,8 @@ ut_tube(ut_polyline([[0,0,0], [50,0,0], [50,50,0]], r = 15),
         ut_round(od = 12, wall = 2));
 ```
 
-It has no dependencies and needs OpenSCAD 2021.01. Newer versions are not
-supported yet ([#40](https://github.com/CameronBrooks11/uniTube/issues/40)).
+It has no dependencies and needs OpenSCAD 2021.01, the version it is tested on
+([#38](https://github.com/CameronBrooks11/uniTube/issues/38)).
 
 ## What it is for
 
