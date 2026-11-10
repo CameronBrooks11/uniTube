@@ -1,3 +1,10 @@
+---
+title: 0004 No mitres
+parent: Decisions
+grand_parent: Developer
+nav_order: 4
+---
+
 # ADR 0004 — `r = 0` at an interior vertex is an error, not a mitre
 
 **Status:** accepted (2026-08-21)

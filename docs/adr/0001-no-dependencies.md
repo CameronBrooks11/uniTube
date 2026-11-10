@@ -1,3 +1,10 @@
+---
+title: 0001 No dependencies
+parent: Decisions
+grand_parent: Developer
+nav_order: 1
+---
+
 # ADR 0001 — uniTube takes no dependencies
 
 **Status:** accepted (2026-08-21) · supersedes an earlier proposal to depend on BOSL2

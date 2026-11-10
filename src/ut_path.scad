@@ -107,7 +107,7 @@ function _ut_g1(segs, closed,
 // Per-segment samples: [position, tangent, transport axis, transport angle, local arclength].
 // `first` includes the segment's start point; otherwise it is the previous
 // segment's end point and is skipped -- this is the unconditional dedupe that
-// stops the coincident-point NaN (docs/salvage.md §3).
+// stops the coincident-point NaN (docs/developer/history.md §3).
 function _ut_samples(seg, first) = seg[0] == "L"   ? _ut_samples_L(seg, first)
                                    : seg[0] == "A" ? _ut_samples_A(seg, first)
                                                    : _ut_samples_P(seg, first);
@@ -145,7 +145,7 @@ function _ut_gather(segs, i, base, acc) = i >= len(segs)
 
 // Transport scan: n[i] = rotate(n[i-1]) about this step's own axis by its own
 // angle. For an arc that is CLOSED FORM and exact -- the payoff of an arc-native
-// IR, and the generalisation of half_curvedPipe.scad:19 (docs/salvage.md §2).
+// IR, and the generalisation of half_curvedPipe.scad:19 (docs/developer/history.md §2).
 function _ut_transport(raw, i, prev,
                        acc) = i >= len(raw) ? acc
                                             : let(nx = raw[i][3] < 1e-12

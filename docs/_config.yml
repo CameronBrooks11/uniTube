@@ -1,0 +1,49 @@
+title: uniTube
+description: The Universal Tube Library for OpenSCAD — a path compiler and a hollow-network assembler.
+theme: just-the-docs
+color_scheme: openscad-light # or openscad-dark
+url: "https://cameronbrooks11.github.io"
+baseurl: "/uniTube"
+permalink: pretty
+repository: "CameronBrooks11/uniTube"
+
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: "default"
+
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 2
+  preview_words_before: 3
+  preview_words_after: 3
+  tokenizer_separator: /[\s/]+/
+  rel_url: true
+  button: false
+  focus_shortcut_key: "k"
+
+aux_links:
+  GitHub: https://github.com/CameronBrooks11/uniTube
+
+nav_enabled: true
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+  - jekyll-include-cache
+  # The pages link to each other as `other.md`, which is what works when they
+  # are read on GitHub. This rewrites those links to the built pages.
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+exclude:
+  - SITE-LICENSE.txt
+  - Gemfile
+  - Gemfile.lock
+  - vendor

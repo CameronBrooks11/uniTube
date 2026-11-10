@@ -19,4 +19,4 @@ what this project grew out of.
 > `jantecnl/` was removed on 2026-08-21. It carried **no licence of any kind** —
 > it came from a personal blog post — and only its run coordinates were ever
 > used. Those are now first-party geometry in `examples/06_manifold_4into1.scad`,
-> and the historical record is in `docs/salvage.md` and the git history.
+> and the historical record is in `docs/developer/history.md` and the git history.

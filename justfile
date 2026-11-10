@@ -180,7 +180,7 @@ check: fmt-check lint guards warnings preview
     while IFS= read -r f; do
       # --hardwarnings turns an unknown named argument into exit 1. Without it
       # OpenSCAD exits 0 — that is the exact bug class that broke this library
-      # for 19 months (see docs/verification.md). Never drop this flag.
+      # for 19 months (see docs/developer/verification.md). Never drop this flag.
       # The target MUST be .stl: with -o *.csg a failing assert() exits 0.
       openscad --hardwarnings -o "{{OUT}}/check/$(basename "${f%.scad}").stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "CHECK FAIL: $f"; exit 1; }
@@ -264,6 +264,45 @@ render:
       openscad -o "{{OUT}}/render/$(basename "${f%.scad}").stl" "$f" 2>/dev/null
       echo "  {{OUT}}/render/$(basename "${f%.scad}").stl"
     done
+
+# The images are COMMITTED, so the pages show them on GitHub as well as on the
+# site. Re-run this after changing an example. It renders through OpenCSG, like
+# `just preview`, so it needs a GL context and cannot run headless without xvfb.
+# (No [doc()] attribute here: the just that Ubuntu 24.04 packages, and so CI,
+# does not know it. `just --list` shows the last comment line instead.)
+# Render each example to a PNG under docs/assets/img/examples/ for the documentation site.
+docs-images:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out=docs/assets/img/examples
+    mkdir -p "$out"
+    # Networks only render correctly on 2021.01 (issue #40), so say which
+    # version drew these.
+    echo "  rendering with $(openscad --version 2>&1 | head -1)"
+    if [ -n "${DISPLAY:-}" ]; then
+      run_scad() { openscad "$@"; }
+    elif command -v xvfb-run >/dev/null; then
+      run_scad() { xvfb-run -a --server-args="-screen 0 1024x768x24" openscad "$@"; }
+    else
+      echo "  docs-images needs a GL context (a DISPLAY, or xvfb-run)"; exit 1
+    fi
+    for f in examples/*.scad; do
+      b=$(basename "${f%.scad}")
+      png="$out/$b.png"
+      # Delete first, so a failed render cannot leave last run's image in place.
+      rm -f "$png"
+      run_scad -o "$png" --imgsize=1000,750 --viewall --autocenter "$f" >/dev/null 2>&1 || true
+      [ -s "$png" ] || { echo "  FAIL $b  (no image produced)"; exit 1; }
+      echo "  $png"
+    done
+
+# Build the documentation site into docs/_site. Needs Ruby and `bundle install` in docs/.
+docs-build:
+    cd docs && bundle exec jekyll build
+
+# Serve the documentation site at http://localhost:4000/uniTube/ and rebuild on change.
+docs:
+    cd docs && bundle exec jekyll serve --livereload
 
 # Remove all build output.
 clean:

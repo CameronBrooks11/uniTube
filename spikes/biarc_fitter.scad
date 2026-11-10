@@ -21,7 +21,7 @@
 // THE ARGUMENT THAT REMAINS, and it is real: RESOLUTION INDEPENDENCE. Measured,
 // an arc-based path gives 7 stations at $fa=24 and 183 at $fa=0.5; a sampled path
 // gives 161 either way. $fa and $fs are INERT on a P segment, so SPINE-5 ("no
-// roll, no resolution") does not hold for it -- see docs/ir.md, which now says so.
+// roll, no resolution") does not hold for it -- see docs/reference/ir.md, which now says so.
 // A fitter is the only route to fixing that, and it is also the prerequisite for
 // ut_bezier and ut_bend_table.
 //

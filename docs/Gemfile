@@ -1,0 +1,8 @@
+source 'https://rubygems.org'
+
+# The documentation site only. uniTube itself has no dependencies.
+gem "jekyll", "~> 4.4.1"
+gem "just-the-docs", "0.12.0"
+gem "jekyll-github-metadata", ">= 2.15"
+gem "jekyll-include-cache", group: :jekyll_plugins
+gem "jekyll-relative-links", group: :jekyll_plugins

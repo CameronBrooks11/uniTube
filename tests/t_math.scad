@@ -5,7 +5,7 @@ use <../src/ut_core.scad>;
 use <../src/ut_math.scad>;
 // clang-format on
 
-// --- ut_turn: the acos replacement (AGENTS.md rule 7, docs/salvage.md §3) -----
+// --- ut_turn: the acos replacement (AGENTS.md rule 7, docs/developer/history.md §3) -----
 assert(abs(ut_turn([ 1, 0, 0 ], [ 0, 1, 0 ]) - 90) < 1e-9, "ut_turn: orthogonal -> 90");
 assert(abs(ut_turn([ 1, 0, 0 ], [ 1, 0, 0 ])) < 1e-9, "ut_turn: identical -> 0");
 assert(abs(ut_turn([ 1, 0, 0 ], [ -1, 0, 0 ]) - 180) < 1e-9, "ut_turn: opposed -> 180");

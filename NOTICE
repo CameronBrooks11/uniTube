@@ -6,6 +6,13 @@ everything under src/, examples/, tests/, tools/, checks/, docs/ and spikes/,
 plus the build files at the root. It has NO third-party dependencies and links
 to nothing, so USING uniTube carries no obligation beyond BSD-2-Clause.
 
+The documentation site's configuration is the one exception under docs/. The
+files docs/_config.yml, docs/Gemfile, docs/_plugins/ and docs/_sass/ derive from
+just-the-docs-template (Copyright (c) 2022 just-the-docs) by way of
+just-the-docs-template-openscad (Copyright (c) 2025 Cameron K Brooks), both MIT.
+The licence text is in docs/SITE-LICENSE.txt. They build the website and are no
+part of the library.
+
 The only third-party code in this repository is under reference/, which no part
 of uniTube imports, links to, or is derived from. It is present as prior art and
 is MERELY AGGREGATED here in the sense of GPLv3 section 5 -- separate works, on a
@@ -67,7 +74,7 @@ reference/LICENSES/          the full text of every licence relied on above that
     NOTE: reference/jantecnl/ was REMOVED on 2026-08-21. It carried no licence
     statement of any kind, having come from a personal blog post. Only its run
     coordinates were ever used, and those now live in examples/06_manifold_4into1
-    as first-party geometry. The historical record is in docs/salvage.md and in
+    as first-party geometry. The historical record is in docs/developer/history.md and in
     the git history.
 
     reference/axford/libs/vector.scad is GPL and was `use <>`d by every core

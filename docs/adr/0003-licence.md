@@ -1,3 +1,10 @@
+---
+title: 0003 Licence and quarantine
+parent: Decisions
+grand_parent: Developer
+nav_order: 3
+---
+
 # ADR 0003 — uniTube is BSD-2-Clause; prior art is quarantined
 
 **Status:** accepted (2026-08-21) · **amended 2026-08-21 — see below**
@@ -54,6 +61,6 @@ It has been deleted. The coordinates are now first-party geometry in
 `examples/06_manifold_4into1.scad`, so the directory bought nothing but a file
 with **no licence statement of any kind** sitting in a repository whose whole
 licence story is otherwise clean. The historical record survives in
-`docs/salvage.md` §4 and in the git history.
+`docs/developer/history.md` §4 and in the git history.
 
 Everything else in this ADR stands.

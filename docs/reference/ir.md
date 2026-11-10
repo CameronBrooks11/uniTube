@@ -1,3 +1,9 @@
+---
+title: The path IR
+parent: Reference
+nav_order: 7
+---
+
 # The path IR
 
 Two levels, one compiler function between them, and a hard rule about who may
@@ -60,11 +66,6 @@ the chord and the tangent is **interpolated along it**, so it is exactly the
 stored tangent at every sample and second order in between — measured worst case
 0.021° anywhere on a 2-turn helix at `n=40`.
 
-> It used to return the tangent at the far end of the chord for every `s`, which
-> made `ut_at(path, 0)` report the tangent one sample downstream: 8.94° out at
-> the start of that same helix, exactly one sample's rotation. The function had
-> no test at all, which is how it survived. It has one now.
-
 ## The rule
 
 Frontends produce a spine and never touch frames. Exactly one function lowers
@@ -83,7 +84,7 @@ Every historical geometry bug in this repository, and both of the bugs found in
 | `SPINE-3` | tangent continuity everywhere. There is no G0 / mitre case (ADR 0004) |
 | `SPINE-4` | non-degenerate: lines have length, arcs have `0 < ang ≤ 180` |
 | `SPINE-5` | no roll. **No resolution for `L` and `A`** — see the caveat below |
-| `SPINE-6` | a spine is a STRAND, not a graph. Branching lives in the network (Phase 3) |
+| `SPINE-6` | a spine is a STRAND, not a graph. Branching lives in the network |
 | `STATION-1` | no two consecutive positions coincide — the unconditional dedupe |
 | `STATION-2` | orthonormal frames, right-handed, det +1, no scale or shear |
 | `STATION-3` | terminal and arc-tangency tangents are EXACT, never smoothed |
@@ -122,6 +123,9 @@ other frontends raises a real question each — what *is* a closed turtle progra
 The frame is transported all the way round, the loop holonomy is measured against
 the seed, the nearest multiple of `360/symmetry` is absorbed, and the remainder is
 distributed by arclength. Measured on a four-arc torus: residual **0°**.
+`symmetry` comes from the options, not from the profile, and `twist` is not
+required to close
+([#34](https://github.com/CameronBrooks11/uniTube/issues/34)).
 
 **A closed tube's lumen is a sealed internal cavity.** CGAL reports `Volumes: 3`
 — outside, material, trapped bore. That is correct topology, not a defect, and it
@@ -129,25 +133,11 @@ means the part is useless until something breaches it.
 
 ## Frame policy
 
-| policy | behaviour |
-|---|---|
-| `frame="transport"` *(default)* | rotation-minimizing; no spiral |
-| `frame="fixed"`, `normal=UP` | seam pinned to a world direction along the whole run |
-| `frame=<list>` | one normal per station, projected and asserted |
-| `twist=<deg>` | distributed by arclength on top of any of the above |
-| `closed=true` | holonomy measured, `symmetry` absorbed, remainder distributed |
-
-Transport across an arc is **closed form** — rotate the roll reference about the
-arc's own axis by the arc's own sweep angle. Exact, one line, no accumulated
-error. This is the single strongest argument for an arc-native IR, and it is
-`reference/axford/half_curvedPipe.scad:19` generalised (docs/salvage.md §2).
-
-A consequence worth knowing: on a **planar** bend the roll reference is parallel
-to the bend axis, and Rodrigues leaves a vector parallel to its axis invariant.
-So a planar bend produces **exactly zero twist**, asserted in `tests/t_path.scad`.
-
-Seeding falls back from `UP` to `BACK` when the run starts parallel to the
-reference. Without that, a vertical run yields `[nan,nan,nan]` for every station.
+How roll is chosen — `frame`, `normal`, `twist`, and what each asserts — is in
+[`usage/frames.md`](../usage/frames.md). The compiler side of it is one fact:
+transport across an arc is closed form, a rotation of the roll reference about
+the arc's own axis by the arc's own sweep angle. That is the strongest argument
+for keeping arcs in the spine rather than sampling them (ADR 0002).
 
 ## Worked example
 

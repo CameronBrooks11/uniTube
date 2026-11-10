@@ -1,11 +1,11 @@
 // t_path — the spine IR and the frame compiler. Pure data: nothing renders.
-// This whole file is only possible because the IR is data (docs/verification.md).
+// This whole file is only possible because the IR is data (docs/developer/verification.md).
 
 // clang-format off
 use <../src/uniTube.scad>;
 // clang-format on
 
-// ============================================ the worked 90-degree elbow (docs/ir.md)
+// ============================================ the worked 90-degree elbow (docs/reference/ir.md)
 c = [ 35, 15, 0 ];
 u = [ 0, -1, 0 ];
 v = [ 1, 0, 0 ];
@@ -58,7 +58,7 @@ assert(max([for (i = [0:N - 2]) ut_turn(ut_st_t(sts[i]), ut_st_t(sts[i + 1]))]) 
 
 // EXIT CRITERION: a PLANAR bend produces EXACTLY zero twist.
 // The roll reference [0,0,1] is parallel to the bend axis [0,0,1], and Rodrigues
-// leaves a vector parallel to its axis invariant. docs/salvage.md §2.
+// leaves a vector parallel to its axis invariant. docs/developer/history.md §2.
 assert(max([for (s = sts) norm(ut_st_n(s) - [ 0, 0, 1 ])]) < 1e-12,
        "a planar bend must produce exactly zero twist -- every normal stays [0,0,1]");
 

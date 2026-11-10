@@ -15,7 +15,7 @@ and assembled into branching networks whose bores stay open.
 > **`0.x` on purpose.** The geometry is verified, but the API has not yet been
 > used by anything outside this repository, and the first real consumer usually
 > finds something. Names and argument shapes may still move; the invariants in
-> [`docs/ir.md`](docs/ir.md) are the part meant to be stable.
+> [`docs/reference/ir.md`](docs/reference/ir.md) are the part meant to be stable.
 >
 > Not shipped, deliberately: terminations (a separate library), junction
 > fillets, profile variation, multi-lumen sections.
@@ -60,7 +60,8 @@ invisible on a round tube. `examples/12_section_view.scad`.
 
 ## Requirements
 
-OpenSCAD 2021.01 or newer. **Nothing else** — uniTube has no dependencies and a
+OpenSCAD 2021.01. Newer versions are not supported yet
+([#40](https://github.com/CameronBrooks11/uniTube/issues/40)). **Nothing else** — uniTube has no dependencies and a
 fresh clone renders immediately.
 
 ## Layout
@@ -70,7 +71,7 @@ src/         the library. No file here emits geometry on import.
 examples/    runnable demos, one per capability
 tests/       assert-only; `just test`
 reference/   read-only quarantine of prior art. src/ never imports from here.
-docs/        the IR, frames, profiles, junctions, and ADRs
+docs/        the documentation site: usage, reference, design decisions
 ```
 
 ## Development
@@ -84,7 +85,7 @@ just verify     # slow: forced-CGAL manifoldness + the partspec contracts
 ```
 
 What each gate is for, and why `Simple: yes` proves almost nothing, is in
-[`docs/verification.md`](docs/verification.md).
+[`docs/developer/verification.md`](docs/developer/verification.md).
 
 ## Credits
 

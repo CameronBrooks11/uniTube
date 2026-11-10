@@ -1,7 +1,17 @@
-# Salvage — what the old implementation got right
+---
+title: History
+parent: Developer
+nav_order: 2
+---
 
-Recorded in Phase 0, while the reasoning is fresh, so that the *understanding*
-survives even though the code does not. The code itself is in `reference/axford/`
+# History
+
+The numbered sections first record what the pre-2026 implementation got right,
+then the defects found after the rewrite. Source comments cite them by number,
+so the numbers are stable.
+
+The first five were recorded in Phase 0, while the reasoning was fresh, so that
+the *understanding* survives even though the code does not. The code itself is in `reference/axford/`
 and nothing under `src/` may import it.
 
 ## 1. The fillet arithmetic is correct (`reference/axford/curvedPipe.scad:71-105`)
@@ -113,3 +123,91 @@ same frame, different region.
   obsolete once a run is one swept polyhedron rather than a union of primitives.
 
 **1035 vendored lines are replaced by roughly 25** in `src/ut_math.scad`.
+
+---
+
+The sections above were written before the rewrite. The ones below record
+defects found after it, moved here from the pages that now describe only the
+current behaviour. Each has a guard or a test that was watched to fail.
+
+## 6. A fixed frame's fallback was a discontinuity
+
+`ut_ref_fallback()` swaps the reference vector when a run starts parallel to it.
+That is correct for what it was written for: choosing a starting reference
+**once**, at station 0, for a transport frame. Used once there is no
+discontinuity to create.
+
+`frame="fixed"` derived every station's normal independently, so the fallback
+became a **hard switch in the middle of a run**. Measured on the old
+`examples/05`: as the conduit turned to vertical the seam jumped **174° in a
+single 6° step**. The mesh stayed manifold, CGAL reported `Simple: yes`, `just
+check`, `just cgal` and all 19 partspec assertions passed, and the C-section was
+simply wrong from that station on.
+
+The projection is smooth to 1e-13 at every approach angle **down to 1° from the
+axis** and only breaks *at* it — a cliff, not gradual ill-conditioning. So
+`ut_stations()` now refuses the genuinely undefined ask rather than substituting
+a different reference for it: a vertical pipe has no upward-facing side.
+
+**Three tests asserted the wrong property.**
+
+`tests/t_frame.scad` and `tests/t_split.scad` both ended on a vertical leg *on
+purpose*, and both asserted that the result was **not NaN**. It is not NaN — the
+fallback guarantees that. Finiteness was never the requirement; **continuity**
+is, and nothing checked it. `STATION-6` was documented from Phase 1 and enforced
+by nothing.
+
+The third was worse. A caller-supplied `frame=<list>` parallel to the tangent
+*does* produce `[nan,nan,nan]`, and the assert written to catch it —
+`max([for (s = sts) abs(t * n)]) < 1e-9` — **passed**, reporting `2.22e-16`,
+because OpenSCAD's `max()` silently drops `nan` entries. Never test a frame for
+validity with `max()` alone; count the bad stations instead.
+
+All three are now refused at the cause, and each refusal has a guard in
+`tests/guards/` that is watched to fire.
+
+## 7. Sampled paths: three first-order mistakes
+
+**End tangents.** The ends used to be first-order — a two-point chord, error about half a
+sample's rotation, measured 2.24° at n=160. Since the ends are exactly where port
+frames come from (`STATION-3`) and 2.2° across a 20 mm flange is ~0.8 mm of gap,
+that was the only error in a sampled path large enough to make a physical part
+wrong. `_ut_central` now uses a **three-point one-sided difference**, which is
+second order like the interior:
+
+| n | two-point (old) | three-point (now) |
+|---|---|---|
+| 40 | 8.949° | 0.460° |
+| 160 | 2.237° | **0.0141°** |
+| 320 | 1.119° | 0.0032° |
+
+**`ut_at` on a sampled segment.** It used to return the tangent at the far end of the chord for every `s`, which
+made `ut_at(path, 0)` report the tangent one sample downstream: 8.94° out at
+the start of a 2-turn helix at n=40, exactly one sample's rotation. The function had
+no test at all, which is how it survived. It has one now.
+
+**The turtle's bend split.** `ut_turtle` splits by replacing the oversized bend in its
+own command list with two halves and re-entering at the same index. Both slices
+around it must be guarded against being empty, because **OpenSCAD silently
+reverses a descending range**: `[0:-1]` is `[-1, 0]`, not `[]`, and
+`--hardwarnings` says nothing. Unguarded, a bend over 180° as the *first* or
+*last* command spliced `undef` into the program and aborted with
+`unknown command "undef"` — naming the wrong cause entirely. The only case
+covered had commands on both sides of the bend, so neither boundary was tested.
+
+## 8. Networks: two measurements taken in the wrong place
+
+**`NET-5` was an endpoint test.** `NET-5` compares the two centrelines by **sampled path distance**, not by
+endpoints. It was an endpoint test until 2026-08-21, and that miss was total:
+sliding a liner 70 mm along a jacket so the two shared no endpoint lost **3733.3
+mm³ — exactly 100% of the liner** — with `ut_check_net` returning `true` and CGAL
+reporting `Simple: yes`.
+
+**Radii where facets were needed.** `NET-4` compared the ball's two radii, which
+treats both spheres as smooth; on two `od=20 id=17` runs at `$fn=5` the radii
+said a 3.1 mm wall and the facets said −0.33 mm, a hole through the junction.
+The same mistake sized the core sphere itself: `ut_bore_inradius` used to return
+`min(norm(q))` over the bore's **vertices**, which `ut_ring()` places exactly on
+the nominal circle — so it returned `id/2` at every resolution while the real
+inscribed radius is `id/2·cos(180/n)`. It uses `ut_inradius()` now, which
+measures to the **edges**.
