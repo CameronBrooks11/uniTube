@@ -204,7 +204,9 @@ function _ut_joints_in(net, g) =
 //
 // render() stays for now. It masked the defect by running CGAL, which repairs
 // orientation, and it costs a CGAL evaluation in preview (measured 1.9 s for
-// the jacket). With the winding right it buys nothing measured.
+// the jacket). With the winding right the unwrapped preview of that example is
+// correct too. One thing it still changes: OpenCSG draws a subtracted solid's
+// faces green, so without it a bore seen through an open end is green.
 //
 // opts [["preview","fast"]] skips it, for a model too heavy to evaluate live.
 module ut_assemble(net, opts = [])

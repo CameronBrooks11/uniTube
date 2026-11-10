@@ -25,6 +25,17 @@ use <ut_math.scad>;
 //
 // This is a VIEW, not a part: it forces a CSG difference, so never leave it on
 // around geometry being exported for printing.
+//
+// THE DIFFERENCE IS EVALUATED WITH render(), AND THAT IS NOT OPTIONAL. The cutter
+// has to be far larger than the part, so in any ordinary view the CAMERA IS
+// INSIDE IT -- and OpenCSG cannot subtract a solid that contains the viewer.
+// Preview then draws the part UNCUT, with no warning. It is not this library's
+// geometry: OpenSCAD's own cylinder() minus a cube(1000) previews uncut too, on
+// 2021.01 and on 2026.10.15, and cuts with a cube(160).
+//
+// This went unseen while ut_sweep() wound its faces inside-out: two wrongs drew
+// something that passed for a section. render() costs a CGAL evaluation, which
+// is the right price for a view whose whole job is to show what is there.
 module ut_cutaway(normal = [ 0, 1, 0 ], at = 0, on = true, size = 1000)
 {
     if (!on)
@@ -33,7 +44,7 @@ module ut_cutaway(normal = [ 0, 1, 0 ], at = 0, on = true, size = 1000)
     }
     else
     {
-        difference()
+        render(convexity = 10) difference()
         {
             children();
             translate(ut_unit(normal) * at) _ut_halfspace(ut_unit(normal), size);

@@ -100,13 +100,41 @@ volume −174446, and at the time 3429 non-manifold edges — is what an ordinar
 inside-out.
 
 `ut_assemble()` still wraps its CSG in `render()`. With the winding right, the
-unwrapped preview is also correct, so the wrapper now costs a CGAL evaluation in
-preview and buys nothing measured.
+unwrapped preview of that example is also correct. Whether the wrapper is still
+worth a CGAL evaluation in preview is open; see the colouring note below before
+removing it.
 
-The gate needs no tuning, because the signal is binary. OpenSCAD's Cornfield
-scheme paints back faces green and front faces yellow, and **a part viewed from
-outside shows no back faces at all**. That holds for a cutaway too:
-`examples/12_section_view` measures 0.0%, where it measured 18.7% inside-out.
+### What the gate measures, and what it cannot
+
+OpenSCAD's Cornfield scheme paints front faces yellow and back faces green, and
+a part viewed from outside shows no back faces. `just preview` fails an example
+with more than 2% green. On 2021.01 every example reads 0.0%.
+
+Three things about that colour, each measured on a cut tube:
+
+| preview of | 2021.01 | 2026.10.15 |
+|---|---|---|
+| `difference()` with a 160 mm cutter, not rendered | cut, 28.9% green | cut, 28.9% green |
+| the same wrapped in `render()` | cut, 0.0% | cut, 28.7% green |
+| `difference()` with a 1000 mm cutter, not rendered | **not cut**, 0.0% | cut, 28.9% green |
+| OpenSCAD's own `cylinder` minus `cube(1000)` | **not cut** | **not cut** |
+| OpenSCAD's own `cylinder` minus `cube(160)` | cut | cut |
+
+- **OpenCSG draws a subtracted solid's faces green.** That is by design, on both
+  versions, so green is not only a symptom of a defect. Every boolean in this
+  library is wrapped in `render()`, and on 2021.01 a rendered result is drawn
+  all yellow, which is why the gate reads 0.0% there. 2026.10.15 keeps the
+  green on a rendered result, so the gate does not apply to it ([#38]).
+- **A cutter that contains the camera is not subtracted at all.** The last two
+  rows use no uniTube geometry. `ut_cutaway()` needs a cutter far larger than
+  the part, so it evaluates its difference with `render()`. It did not before,
+  and while the swept faces were inside-out the two errors drew something that
+  passed for a section.
+- **The gate cannot see a cut that did not happen.** An uncut part reads 0.0%,
+  the same as a clean one. `examples/12_section_view` passed with no section
+  drawn. Nothing yet asserts that a cutaway cuts in preview.
+
+[#38]: https://github.com/CameronBrooks11/uniTube/issues/38
 
 ## `Simple: yes` is necessary and nowhere near sufficient
 

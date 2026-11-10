@@ -160,9 +160,12 @@ preview:
       # NO --render: this is the OpenCSG preview path, deliberately.
       run_scad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
       [ -s "$png" ] || { echo "  FAIL $b  (no preview image produced -- no GL?)"; fail=1; continue; }
-      # No exemptions. A cutaway used to be allowed any amount, on the belief
-      # that it shows back faces by design; examples/12 measures 0.0% now that
-      # the faces are wound correctly, and 18.7% was the defect showing.
+      # No exemptions. A cutaway used to be allowed any amount of green. It no
+      # longer needs it: ut_cutaway() evaluates its difference with render(),
+      # and on 2021.01 a rendered result is drawn all front faces.
+      # THIS CANNOT SEE A CUT THAT DID NOT HAPPEN -- an uncut part reads 0.0%
+      # too. (2026.10.15 keeps the green on rendered results, so this gate reads
+      # about 29% there on a correct cutaway. Issue #38.)
       limit=2
       pct=$($py tools/preview_backfaces.py "$png")
       if awk -v p="$pct" -v l="$limit" 'BEGIN{exit !(p>l)}'; then
@@ -289,8 +292,9 @@ docs-images:
     set -euo pipefail
     out=docs/assets/img/examples
     mkdir -p "$out"
-    # Networks only render correctly on 2021.01 (issue #40), so say which
-    # version drew these.
+    # Use 2021.01, the tested version. A newer OpenSCAD keeps the faces a
+    # difference() creates green even after render(), so cut ends and
+    # cutaways come out two-tone. Say which version drew these.
     echo "  rendering with $(openscad --version 2>&1 | head -1)"
     if [ -n "${DISPLAY:-}" ]; then
       run_scad() { openscad "$@"; }
