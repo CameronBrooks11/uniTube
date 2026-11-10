@@ -9,6 +9,8 @@ nav_order: 1
 The Universal Tube Library for OpenSCAD: describe a tube's centreline, give it a
 cross-section, and join several into branching networks whose bores stay open.
 
+![Four inlet tubes curving into one outlet](assets/img/examples/06_manifold_4into1.png)
+
 ```scad
 use <uniTube/src/uniTube.scad>;
 
@@ -17,7 +19,8 @@ ut_tube(ut_polyline([[0,0,0], [50,0,0], [50,50,0]], r = 15),
         ut_round(od = 12, wall = 2));
 ```
 
-It has no dependencies and needs OpenSCAD 2021.01.
+It has no dependencies and needs OpenSCAD 2021.01. Newer versions are not
+supported yet ([#40](https://github.com/CameronBrooks11/uniTube/issues/40)).
 
 ## What it is for
 

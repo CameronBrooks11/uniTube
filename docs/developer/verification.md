@@ -18,7 +18,9 @@ wrong. Every gate in this repository is shaped by this table.
 > **Known issue ([#38](https://github.com/CameronBrooks11/uniTube/issues/38)).**
 > Everything here is measured on 2021.01, the version CI pins. On 2026.10.15
 > `tests/t_scoping.scad` fails and `just cgal` cannot pass, because that version
-> prints no `Simple: yes` line.
+> prints no `Simple: yes` line. Worse, its Manifold backend exposes that the
+> swept polyhedra are wound inside-out, and networks export wrong there
+> ([#40](https://github.com/CameronBrooks11/uniTube/issues/40)).
 
 | command | exit |
 |---|---|
@@ -64,6 +66,11 @@ order, floating point, and any `$fa`/`$fs` change, and they train people to
 ignore the suite.
 
 ## Preview is not geometry, and it can lie on its own
+
+> **Known issue ([#40](https://github.com/CameronBrooks11/uniTube/issues/40)).** The STL figures in this section
+> are exactly what a normal `-o x.stl` export of `examples/08` produces on
+> OpenSCAD 2026.10.15, where inside-out face winding stops `difference()` from
+> subtracting. The diagnosis below has not been re-examined against that.
 
 Every tier above except `just preview` evaluates geometry with CGAL. **F5 preview
 does not.** OpenCSG renders `difference()` by depth-peeling the framebuffer, and

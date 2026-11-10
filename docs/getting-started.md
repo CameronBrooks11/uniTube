@@ -9,8 +9,10 @@ nav_order: 2
 
 OpenSCAD **2021.01**. uniTube has no other dependencies.
 
-> **Known issue ([#38]).** 2021.01 is the only version the library is tested on.
-> The examples render on 2026.10.15, but one test fails there.
+> **Known issue ([#40]).** Use 2021.01 for now. On newer versions that use the
+> Manifold backend (measured on 2026.10.15), joined networks export the wrong
+> solid: the bores are not cut. A single tube exports with its faces inside-out
+> on every version. 2021.01 is the only version the library is tested on ([#38]).
 
 ## Install
 
@@ -120,3 +122,4 @@ do not stop the render. Every code is listed in
 | [`reference/`](reference/path.md) | every function and module |
 
 [#38]: https://github.com/CameronBrooks11/uniTube/issues/38
+[#40]: https://github.com/CameronBrooks11/uniTube/issues/40
