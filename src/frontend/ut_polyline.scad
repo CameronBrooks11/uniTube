@@ -1,7 +1,7 @@
 // ut_polyline — the incumbent frontend: waypoints plus per-vertex fillet radii.
 //
 // The arithmetic is reference/axford/curvedPipe.scad:71-105 verbatim -- the one
-// unambiguously correct piece of the old library (docs/salvage.md §1) -- plus
+// unambiguously correct piece of the old library (docs/developer/history.md §1) -- plus
 // the three guards it never had. Those guards are the whole point: each of the
 // three inputs below used to produce WRONG GEOMETRY SILENTLY.
 
@@ -30,7 +30,7 @@ function ut_polyline(pts, r = 0, closed = false, frame = "transport", normal = u
                    str("ut_polyline(): r must be a scalar, or a list of ", len(pts), " or ", len(pts) - 2, " values"))
                 assert(
                     closed == false,
-                    "ut_polyline(): closed paths are supported, but only through ut_spine(segs, closed=true). A closed POLYLINE needs an answer to what the fillet at the seam vertex does, and that is deliberately unanswered -- see docs/ir.md.")
+                    "ut_polyline(): closed paths are supported, but only through ut_spine(segs, closed=true). A closed POLYLINE needs an answer to what the fillet at the seam vertex does, and that is deliberately unanswered -- see docs/reference/ir.md.")
                     let(n = len(pts), dirs = [for (i = [0:n - 2]) pts[i + 1] - pts[i]], lens = [for (d = dirs) norm(d)],
                         // vertex-indexed; ends are 0
                         angs = [for (k = [0:n - 1])(k == 0 || k == n - 1)
@@ -66,7 +66,7 @@ function _ut_defl(d1, d2, k, pts, r, n) = let(a = ut_turn(d1, d2))
 // genus 1 and at [80,80] on a 100 mm leg renders GENUS 2 -- an extra through-hole
 // -- with zero diagnostics, because OpenSCAD emits nothing for a non-positive
 // extrusion height. ERROR, never "scale to fit": on a doubleback that rule
-// scales the radius to exactly 0, which is itself NaN. See docs/frontends.md.
+// scales the radius to exactly 0, which is itself NaN. See docs/usage/paths.md.
 function _ut_fits(lens, insets, i, pts,
                   r) = i >= len(lens)
                            ? true
@@ -87,7 +87,7 @@ function _ut_leg(pts, dirs, lens, insets, i) = let(u = ut_unit(dirs[i]), a = pts
                                                    : [];
 
 // The arc at an interior vertex. The centre lies along the internal bisector at
-// r / cos(ang/2) from the vertex; see docs/salvage.md §1 for the derivation.
+// r / cos(ang/2) from the vertex; see docs/developer/history.md §1 for the derivation.
 function _ut_bend(pts, dirs, insets, angs, k, r,
                   n) = let(u1 = ut_unit(dirs[k - 1]), u2 = ut_unit(dirs[k]), ang = angs[k], rad = _ut_r_at(r, k, n),
                            tin = pts[k] - insets[k] * u1, axis = ut_unit(cross(dirs[k - 1], dirs[k])),

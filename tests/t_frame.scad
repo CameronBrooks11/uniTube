@@ -1,5 +1,5 @@
 // t_frame — roll policy. The requirement half_curvedPipe.scad discovered
-// (docs/salvage.md §2), now expressed as two policy strings.
+// (docs/developer/history.md §2), now expressed as two policy strings.
 
 // clang-format off
 use <../src/uniTube.scad>;

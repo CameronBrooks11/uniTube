@@ -94,7 +94,7 @@ does not hold for `P` segments:** `ut_curve` bakes its sample count into the
 spine, and `$fa`/`$fs` are inert on the result (measured: 161 stations at both
 `$fa=24` and `$fa=0.5`, where an arc path gives 7 and 183).
 
-`docs/ir.md` now states this as a limit rather than claiming the invariant. The
+`docs/reference/ir.md` now states this as a limit rather than claiming the invariant. The
 fix is a biarc fitter, which exists as a working prototype in
 `spikes/biarc_fitter.scad` and is deliberately not built — see issue #17
 for the measurements that demoted it.

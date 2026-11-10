@@ -1,7 +1,7 @@
 # Frontends
 
 There are many reasonable ways to describe a tube centreline. They all compile to
-one canonical spine (`docs/ir.md`), and the backend never learns which was used.
+one canonical spine (`docs/reference/ir.md`), and the backend never learns which was used.
 
 ## Shipped
 

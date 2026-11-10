@@ -2,7 +2,7 @@
 // The identical path at r=[20,20] renders genus 1 (a correct tube); at r=[80,80]
 // on a 100 mm leg it used to render GENUS 2 -- an extra through-hole -- because
 // OpenSCAD emits nothing for a non-positive extrusion height and says nothing.
-// docs/salvage.md §3.
+// docs/developer/history.md §3.
 // clang-format off
 use <../../src/uniTube.scad>;
 // clang-format on

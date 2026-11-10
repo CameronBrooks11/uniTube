@@ -3,19 +3,27 @@
 Start with [`../README.md`](../README.md) for what the library is and how to run
 it. This directory is the reference.
 
-## The design
+## Using the library
 
 | | |
 |---|---|
-| [`ir.md`](ir.md) | **Start here.** The two-level path IR — the exact `L`/`A`/`P` spine, the stations it compiles to, all 13 invariants, and the frame policy. Includes a worked elbow you can verify by hand. |
-| [`profile.md`](profile.md) | The cross-section, the lumen, split C-sections, and the correspondence rule that keeps end caps from self-intersecting. |
-| [`junctions.md`](junctions.md) | How several hollow runs meet without sealing each other's bores: the two-pass, lumen groups, joint bodies, and the limits stated out loud. |
-| [`frontends.md`](frontends.md) | The four ways to describe a path, how to choose one, and the measured cost of a sampled path. |
-| [`frames.md`](frames.md) | Roll: transport versus fixed, the vertical-tangent degeneracy, and the historical `pipeOrientate` derivation. |
-| [`salvage.md`](salvage.md) | What the pre-2026 implementation got right, recorded as understanding rather than code. |
-| [`verification.md`](verification.md) | What "check" and "test" mean for CAD: OpenSCAD's real exit codes, the gate tiers, and why `Simple: yes` proves almost nothing. |
+| [`usage/paths.md`](usage/paths.md) | The four ways to describe a path, how to choose one, and the measured cost of a sampled path. |
+| [`usage/profiles.md`](usage/profiles.md) | The cross-section, the lumen, split C-sections, and the correspondence rule that keeps end caps from self-intersecting. |
+| [`usage/frames.md`](usage/frames.md) | Roll: transport versus fixed, twist, and the vertical-tangent degeneracy. |
+| [`usage/networks.md`](usage/networks.md) | How several hollow runs meet without sealing each other's bores: the two-pass, lumen groups, joint bodies, and the limits stated out loud. |
 
-## The decisions
+## Reference
+
+| | |
+|---|---|
+| [`reference/ir.md`](reference/ir.md) | The two-level path IR — the exact `L`/`A`/`P` spine, the stations it compiles to, the `SPINE` and `STATION` invariants, and a worked elbow you can verify by hand. |
+
+## Design and development
+
+| | |
+|---|---|
+| [`developer/verification.md`](developer/verification.md) | What "check" and "test" mean for CAD: OpenSCAD's real exit codes, the gate tiers, and why `Simple: yes` proves almost nothing. |
+| [`developer/history.md`](developer/history.md) | What the pre-2026 implementation got right, recorded as understanding rather than code. |
 
 Architecture decision records, in [`adr/`](adr/). Each says what was decided, why,
 and — where it matters — what was measured.

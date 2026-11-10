@@ -14,7 +14,7 @@ assert(ut_seg_kind(segs[0]) == "L" && ut_seg_kind(segs[1]) == "A" && ut_seg_kind
 assert(abs(ut_length(p) - 93.5619449019) < 1e-9, "exact developed length");
 
 // The inset math: inset = r*tan(ang/2) = 15*tan(45) = 15, so the first leg is
-// trimmed from 50 mm to 35 mm. docs/salvage.md §1.
+// trimmed from 50 mm to 35 mm. docs/developer/history.md §1.
 assert(abs(ut_seg_len(segs[0]) - 35) < 1e-9, str("leg trimmed by the tangent length, got ", ut_seg_len(segs[0])));
 assert(norm(ut_seg_p1(segs[0]) - [ 35, 0, 0 ]) < 1e-9, "tangent point at 35 mm");
 

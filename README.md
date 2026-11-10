@@ -15,7 +15,7 @@ and assembled into branching networks whose bores stay open.
 > **`0.x` on purpose.** The geometry is verified, but the API has not yet been
 > used by anything outside this repository, and the first real consumer usually
 > finds something. Names and argument shapes may still move; the invariants in
-> [`docs/ir.md`](docs/ir.md) are the part meant to be stable.
+> [`docs/reference/ir.md`](docs/reference/ir.md) are the part meant to be stable.
 >
 > Not shipped, deliberately: terminations (a separate library), junction
 > fillets, profile variation, multi-lumen sections.
@@ -84,7 +84,7 @@ just verify     # slow: forced-CGAL manifoldness + the partspec contracts
 ```
 
 What each gate is for, and why `Simple: yes` proves almost nothing, is in
-[`docs/verification.md`](docs/verification.md).
+[`docs/developer/verification.md`](docs/developer/verification.md).
 
 ## Credits
 

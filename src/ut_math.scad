@@ -1,5 +1,5 @@
 // ut_math — the handful of functions that replace 1035 lines of vendored
-// maths.scad and vector.scad. See docs/salvage.md §5.
+// maths.scad and vector.scad. See docs/developer/history.md §5.
 
 // clang-format off
 use <ut_core.scad>;
@@ -14,7 +14,7 @@ function ut_unit(v) = v / norm(v);
 function ut_turn(a, b) = atan2(norm(cross(a, b)), a *b);
 
 // Rodrigues' rotation of v about unit axis k by ang degrees.
-// This is reference/axford/half_curvedPipe.scad:19, generalised. docs/salvage.md §2.
+// This is reference/axford/half_curvedPipe.scad:19, generalised. docs/developer/history.md §2.
 function ut_rotv(v, ang, k) = v * cos(ang) + cross(k, v) * sin(ang) + k * (k * v) * (1 - cos(ang));
 
 // Project ref orthogonal to t and normalise -- the roll-reference seed.

@@ -6,7 +6,7 @@
 
 The original design sketch described the split tube as returning "ONE closed C-shaped loop —
 the outer arc from 30 to 330, then the inner arc back from 330 to 30 — with
-`inner=undef`". `docs/profile.md` then predicted the consequence: a C-section is
+`inner=undef`". `docs/usage/profiles.md` then predicted the consequence: a C-section is
 **not star-shaped about its centroid**, so `ut_rod`'s centroid-fan end cap would
 produce faces crossing the void, and the section would need "its own cap
 strategy" — realistically a general polygon triangulator, the one piece of work
@@ -27,7 +27,7 @@ That is one extra term in `_ut_faces_hollow` and one conditional index bound.
 ## Consequences
 
 **No triangulator is needed, and none of the deferred work came due.** The
-prediction in `docs/profile.md` was pessimistic because it accepted the plan's
+prediction in `docs/usage/profiles.md` was pessimistic because it accepted the plan's
 single-loop framing; changing the representation dissolved the problem rather
 than solving it.
 

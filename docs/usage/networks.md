@@ -20,7 +20,7 @@ The subtraction happens **once per group, after all unions in that group**, so B
 shell cannot seal A's lumen: B's shell is unioned before A's bore is cut, and A's
 bore always wins.
 
-This is the inherited TODO from the 2023 prototype (removed with `reference/jantecnl/`; see `docs/salvage.md` §4 and the git history),
+This is the inherited TODO from the 2023 prototype (removed with `reference/jantecnl/`; see `docs/developer/history.md` §4 and the git history),
 promoted from a comment to an architectural invariant. It already ships in this
 repository, in the wrong file, as `reference/doommeister/Round_Ducting_V1.1.scad:168`
 (`middle_tee_n`) — working, on real geometry, hardcoded to straight radial branches.
@@ -148,8 +148,9 @@ Stated loudly rather than discovered:
 The 4-into-1 manifold renders in about 8 s. A single run is 0.4–60 ms, because it
 involves no boolean at all — the cost is entirely CGAL's, at the junctions.
 
-Iterating? Comment out the bore pass, or wrap the network in `render()` so it
-caches.
+`ut_assemble()` wraps its CSG in `render()`, so preview pays that cost too. For
+a model too heavy to evaluate live, pass `opts = [["preview", "fast"]]` — and do
+not trust what that preview shows (`docs/developer/verification.md`).
 
 ## Why `Simple: yes` is not the acceptance criterion
 
@@ -162,7 +163,7 @@ Every silent failure this design was reviewed against reported `Simple: yes`:
 | od=12 swept through an r=4 bend, self-intersecting | `Simple: yes, Volumes: 2` |
 | junction rendering as two pieces joined by slivers | `Simple: yes` |
 
-So the gate is tiered (`docs/verification.md`), and the two that matter here are:
+So the gate is tiered (`docs/developer/verification.md`), and the two that matter here are:
 
 - **`ut_check_net`** — `NET-0..6`, analytic, on the IR as pure data, no rendering.
 - **`checks/`** — declared engineering intent, verified with

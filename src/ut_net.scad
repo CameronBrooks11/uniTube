@@ -15,7 +15,7 @@
 // The subtraction happens once per group, AFTER all unions in that group, so B's
 // shell cannot seal A's lumen: B's shell is unioned before A's bore is cut, and
 // A's bore always wins. This is the inherited TODO at
-// the 2023 prototype (removed; see docs/salvage.md §4), promoted from a comment to
+// the 2023 prototype (removed; see docs/developer/history.md §4), promoted from a comment to
 // an architectural invariant -- and it already ships, in the wrong file, as
 // reference/doommeister/Round_Ducting_V1.1.scad:168 middle_tee_n.
 //
@@ -63,9 +63,10 @@ function ut_run(name, path, profile, group = 0, opts = []) = assert(is_string(na
 
 function ut_joint(incident, body = "ball", at = undef,
                   opts = []) = assert(len(incident) >= 2, "ut_joint(): a joint needs at least two incident run ends")
-    assert(body == "ball" || body == "none",
-           str("ut_joint(): body must be \"ball\" or \"none\", got \"", body,
-               "\". Fillets are not in this version -- see docs/junctions.md."))["utjoint", at, incident, body, opts];
+    assert(
+        body == "ball" || body == "none",
+        str("ut_joint(): body must be \"ball\" or \"none\", got \"", body,
+            "\". Fillets are not in this version -- see docs/usage/networks.md."))["utjoint", at, incident, body, opts];
 
 function ut_net(runs, joints = [], opts = []) = [ "utnet", runs, joints, opts ];
 

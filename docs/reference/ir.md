@@ -140,7 +140,7 @@ means the part is useless until something breaches it.
 Transport across an arc is **closed form** — rotate the roll reference about the
 arc's own axis by the arc's own sweep angle. Exact, one line, no accumulated
 error. This is the single strongest argument for an arc-native IR, and it is
-`reference/axford/half_curvedPipe.scad:19` generalised (docs/salvage.md §2).
+`reference/axford/half_curvedPipe.scad:19` generalised (docs/developer/history.md §2).
 
 A consequence worth knowing: on a **planar** bend the roll reference is parallel
 to the bend axis, and Rodrigues leaves a vector parallel to its axis invariant.

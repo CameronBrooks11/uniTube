@@ -180,7 +180,7 @@ check: fmt-check lint guards warnings preview
     while IFS= read -r f; do
       # --hardwarnings turns an unknown named argument into exit 1. Without it
       # OpenSCAD exits 0 — that is the exact bug class that broke this library
-      # for 19 months (see docs/verification.md). Never drop this flag.
+      # for 19 months (see docs/developer/verification.md). Never drop this flag.
       # The target MUST be .stl: with -o *.csg a failing assert() exits 0.
       openscad --hardwarnings -o "{{OUT}}/check/$(basename "${f%.scad}").stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "CHECK FAIL: $f"; exit 1; }
