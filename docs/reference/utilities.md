@@ -60,3 +60,6 @@ and `ut_sphere_inradius` for anything that must fit inside.
 | `ut_cutaway(normal = [0,1,0], at = 0, on = true, size = 1000)` | Module. Removes the part of its children on the `normal` side of the plane at distance `at` along `normal`. `on = false` passes the children through. `size` is the edge of the cutting cube. |
 
 It forces a CSG difference, so do not leave it on around geometry you export.
+The difference is evaluated with `render()`, which costs a CGAL evaluation in
+preview. That is deliberate: the cutter is large enough to contain the camera,
+and OpenSCAD does not subtract a solid the viewer is inside when it previews.

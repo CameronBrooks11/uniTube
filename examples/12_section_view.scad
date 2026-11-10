@@ -15,9 +15,6 @@
 // the square rotate along it.
 //
 // SECTION is the toggle. Set it false and this is an ordinary solid part.
-//
-// preview-exposes-interior -- `just preview` reads this line. A cutaway shows
-// back faces BY DESIGN, and that is the one legitimate reason to.
 
 // clang-format off
 use <../src/uniTube.scad>;

@@ -111,6 +111,14 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
   the wrong cause: `unknown command "undef"`.
 - **Swept quads are non-planar.** Emit triangles, or OpenSCAD prints "PolySet has
   nonplanar faces. Attempting alternate construction" and guesses the topology.
+- **`polyhedron()` wants faces CLOCKWISE seen from outside**, the opposite of the
+  right-hand rule that makes a divergence-theorem volume positive. An inside-out
+  polyhedron renders, previews and passes CGAL here, because CGAL repairs the
+  orientation in any boolean; it exports with every normal reversed, and on a
+  Manifold-backend OpenSCAD `difference()` then subtracts NOTHING. `ut_sweep()`
+  converts in one place (`_ut_cw`), and `just check` measures the sign of every
+  exported mesh. Measured before the fix: an elbow of +5865.23 mm3 exported as
+  -5865.23.
 
 ## Toolchain
 
@@ -140,9 +148,10 @@ splits in two:
   geometry, and at the origin of a manifold that is inside the material.
 - **`just preview`** — renders every example through **OpenCSG**, the F5 path,
   and fails if a closed part shows back faces. Every other gate uses CGAL, so
-  none of them can see a preview that lies. One did: an assembly displayed as a
-  solid slug, 79.3% of its pixels the subtracted bore, while CGAL said
-  `Simple: yes`. Preview is the mode this library is used in.
+  none of them can see what preview draws. It is where inside-out face winding
+  surfaced: an assembly displayed as a solid slug, 79.3% of its pixels back
+  faces, while CGAL said `Simple: yes`. Preview is the mode this library is
+  used in.
 - **`just partspec`** — declared engineering intent in `checks/`, verified with
   [partspec](https://github.com/CameronBrooks11/partspec). This is a DEV-TIME
   tool; uniTube itself still links to nothing.

@@ -1,13 +1,13 @@
 """Report what percentage of a preview image is BACK faces.
 
 OpenSCAD's Cornfield scheme paints front faces yellow (#f9d72c) and back faces
-green (#9dcb51). A closed part viewed from outside shows no back faces at all,
-so any significant green in an OpenCSG preview means the preview is displaying
-the SUBTRACTED geometry over the shell -- the model looks solid, or inside-out,
-while every CGAL-based gate stays green.
+green (#9dcb51). A part viewed from outside shows no back faces at all, so any
+significant green in an OpenCSG preview means a solid is inside-out or the
+preview is not showing the part -- the model looks solid while every
+CGAL-based gate stays green, because CGAL repairs orientation in a boolean.
 
-Measured on examples/08_coaxial_jacket before ut_assemble wrapped its CSG in
-render(): 79.3%. After: 0.0%. Used by `just preview`.
+Measured on examples/08_coaxial_jacket with the swept faces wound inside-out:
+79.3%. Wound the way polyhedron() expects: 0.0%. Used by `just preview`.
 """
 
 import sys

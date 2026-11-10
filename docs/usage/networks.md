@@ -18,9 +18,6 @@ ut_assemble(ut_net([trunk, branch],
                    [ut_joint([["trunk", ["s", 50]], ["branch", "a"]])]));
 ```
 
-> **Known issue ([#40]).** Networks are only correct on OpenSCAD 2021.01. On
-> newer versions that use the Manifold backend the bores are not cut.
-
 ## Runs, joints, nets
 
 ```scad
@@ -187,10 +184,9 @@ A single run involves no boolean and takes 0.4–60 ms. The junctions cost a CGA
 evaluation: the 4-into-1 manifold renders in about 8 s.
 
 `ut_assemble()` wraps its CSG in `render()`, so preview pays that cost too
-(1.9 s for the coaxial jacket). That is deliberate: OpenSCAD's fast preview can
-draw a hollow assembly as a solid slug. For a model too heavy to evaluate live,
-pass `opts = [["preview", "fast"]]`, and do not trust what that preview shows.
-The measurements are in
+(1.9 s for the coaxial jacket). For a model too heavy to evaluate live, pass
+`opts = [["preview", "fast"]]` to skip it. The fast preview of the coaxial
+jacket measures the same as the wrapped one; see
 [`developer/verification.md`](../developer/verification.md).
 
 ## Checking a finished part
@@ -205,4 +201,3 @@ with [partspec](https://github.com/CameronBrooks11/partspec). See
 [#34]: https://github.com/CameronBrooks11/uniTube/issues/34
 [#35]: https://github.com/CameronBrooks11/uniTube/issues/35
 [#36]: https://github.com/CameronBrooks11/uniTube/issues/36
-[#40]: https://github.com/CameronBrooks11/uniTube/issues/40

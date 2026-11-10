@@ -99,9 +99,26 @@ module ut_sweep(rgn, sts, closed = false, open = false)
 {
     assert(len(rgn) > 0, "ut_sweep(): empty region -- a split profile has no bore to sweep");
     assert(len(sts) >= 2, "ut_sweep(): need at least 2 stations");
-    polyhedron(points = ut_mesh_points(rgn, sts, closed), faces = ut_mesh_faces(rgn, sts, closed, open),
+    polyhedron(points = ut_mesh_points(rgn, sts, closed), faces = _ut_cw(ut_mesh_faces(rgn, sts, closed, open)),
                convexity = 10);
 }
+
+// THE WINDING IS CONVERTED HERE, AND ONLY HERE.
+//
+// ut_mesh_faces() winds every face COUNTER-CLOCKWISE seen from outside: the
+// right-hand rule gives the outward normal and ut_volume() is positive, which is
+// what the tests measure. polyhedron() wants the OPPOSITE -- clockwise seen from
+// outside. Passing the faces straight through made every swept solid INSIDE-OUT.
+//
+// Nothing on OpenSCAD 2021.01 showed it. CGAL repairs the orientation in any
+// boolean, so every network rendered and measured correctly, while a plain
+// ut_tube() exported with all its normals reversed: -5865.23 mm3 for an elbow
+// whose volume is +5865.23. On a Manifold-backend OpenSCAD the boolean does NOT
+// repair it, and difference() subtracted nothing -- the tee exported as -43095.99
+// against +13716.23, with its open ends skinned over. Measured on 2026.10.15.
+//
+// `just check` now measures the sign of every exported mesh (tools/stl_volume.py).
+function _ut_cw(faces) = [for (f = faces)[f[2], f[1], f[0]]];
 
 // Sweep one run. `part` selects which region: the finished wall, the outer shell,
 // or the bore as a positive solid. Assembly NEVER asks for "solid" (rule 5).

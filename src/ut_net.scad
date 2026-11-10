@@ -190,22 +190,25 @@ function _ut_joints_in(net, g) =
 // Assemble the network. CSG appears in exactly ONE place in this library, and
 // this is it.
 // PREVIEW CORRECTNESS IS PART OF BEING RIGHT. Preview (F5) is the mode this
-// library is actually used in, and OpenCSG renders difference() by depth-peeling
-// the framebuffer, not by computing geometry. A hollow run has high depth
-// complexity, and OpenCSG silently ran out of layers: measured on
-// examples/08, 79.3% of the model's pixels were the SUBTRACTED bore's back
-// faces painted over the shell. The part looked like a solid green slug, and an
-// STL exported from that state carried 3429 non-manifold edges and a negative
-// volume, because preview geometry is not geometry.
+// library is actually used in, and it is the one path that does not go through
+// CGAL: OpenCSG draws the operands of a difference() as they were given.
 //
-// polyhedron(convexity=) does NOT fix it -- verified identical at 10, 20 and 40.
-// render() does, by evaluating the CSG for real instead of faking it. It costs
-// a CGAL evaluation in preview (measured 1.9 s for the jacket), which is the
-// correct trade: every gate in this repository exists because a wrong answer
-// that renders is worse than a slow one.
+// That is where the inside-out winding of ut_sweep() surfaced. Measured on
+// examples/08, 79.3% of the model's pixels were back faces and the part looked
+// like a solid green slug, while every CGAL gate passed. This comment used to
+// blame OpenCSG for running out of depth layers. It was the winding: the same
+// preview measures 0.0% with the faces wound for polyhedron(): without the
+// render() below on 2021.01 and on 2026.10.15, and with it on 2021.01.
+// polyhedron(convexity=) made no difference at 10, 20 or 40, because convexity
+// was never the problem.
 //
-// opts [["preview","fast"]] opts out, for a model too heavy to evaluate live.
-// It is not the default, because the default must not lie.
+// render() stays for now. It masked the defect by running CGAL, which repairs
+// orientation, and it costs a CGAL evaluation in preview (measured 1.9 s for
+// the jacket). With the winding right the unwrapped preview of that example is
+// correct too. One thing it still changes: OpenCSG draws a subtracted solid's
+// faces green, so without it a bore seen through an open end is green.
+//
+// opts [["preview","fast"]] skips it, for a model too heavy to evaluate live.
 module ut_assemble(net, opts = [])
 {
     assert(ut_check_net(net));

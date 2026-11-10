@@ -41,4 +41,15 @@ assert(min([for (f = fcs) len(f)]) == 3 && max([for (f = fcs) len(f)]) == 3,
 assert(max([for (f = fcs) max(f)]) == len(pts) - 1, "face indices reach exactly the last vertex");
 assert(min([for (f = fcs) min(f)]) == 0, "face indices start at 0");
 
+// WINDING. ut_mesh_faces() is counter-clockwise seen from outside, so ut_volume()
+// is positive; polyhedron() wants clockwise, and ut_sweep() converts with
+// _ut_cw() at the one place the mesh is emitted. Passing the faces through
+// unconverted made every swept solid inside-out, which no gate on 2021.01 could
+// see: CGAL repairs orientation in a boolean. `just check` measures the sign of
+// the EXPORTED mesh, which is the half this file cannot.
+assert(ut_volume(pts, fcs) > 0, "ut_mesh_faces winds counter-clockwise from outside: positive volume");
+assert(abs(ut_volume(pts, _ut_cw(fcs)) + ut_volume(pts, fcs)) < 1e-9,
+       "_ut_cw reverses every face, so the volume changes sign exactly");
+assert(len(_ut_cw(fcs)) == len(fcs), "and it drops none");
+
 cube(0.001); // sentinel

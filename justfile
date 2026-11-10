@@ -119,14 +119,15 @@ warnings:
     done
     exit $fail
 
-# PREVIEW must not lie. F5 is the mode this library is used in, and OpenCSG
-# renders difference() by depth-peeling the framebuffer rather than computing
-# geometry -- so a hollow assembly can display as a solid slug while every
-# CGAL-based gate is green. Nothing here looked at preview until 2026-08-21.
+# Preview draws the mesh AS GIVEN. F5 is the mode this library is used in, and
+# it is the one path that does not go through CGAL -- so it is the one place an
+# inside-out polyhedron shows, as a hollow assembly that displays as a solid slug
+# while every CGAL-based gate is green. Nothing here looked at preview until
+# 2026-08-21.
 #
-# The signal needs no tuning: a closed part viewed from outside shows NO back
-# faces. Measured on examples/08 before the fix: 79.3% back faces. After: 0.0%.
-# There is nothing in between to threshold against. See tools/preview_backfaces.py.
+# The signal needs no tuning: a part viewed from outside shows NO back faces.
+# Measured on examples/08 with the swept faces inside-out: 79.3%. Wound for
+# polyhedron(): 0.0%. See tools/preview_backfaces.py.
 preview:
     #!/usr/bin/env bash
     set -uo pipefail
@@ -159,11 +160,16 @@ preview:
       # NO --render: this is the OpenCSG preview path, deliberately.
       run_scad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
       [ -s "$png" ] || { echo "  FAIL $b  (no preview image produced -- no GL?)"; fail=1; continue; }
-      # An example that deliberately exposes an interior declares it in the file.
-      if grep -q 'preview-exposes-interior' "$f"; then limit=100; else limit=2; fi
+      # No exemptions. A cutaway used to be allowed any amount of green. It no
+      # longer needs it: ut_cutaway() evaluates its difference with render(),
+      # and on 2021.01 a rendered result is drawn all front faces.
+      # THIS CANNOT SEE A CUT THAT DID NOT HAPPEN -- an uncut part reads 0.0%
+      # too. (2026.10.15 keeps the green on rendered results, so this gate reads
+      # about 29% there on a correct cutaway. Issue #38.)
+      limit=2
       pct=$($py tools/preview_backfaces.py "$png")
       if awk -v p="$pct" -v l="$limit" 'BEGIN{exit !(p>l)}'; then
-        echo "  FAIL $b  ${pct}% of the model is BACK faces -- preview is showing the subtracted bore"; fail=1
+        echo "  FAIL $b  ${pct}% of the model is BACK faces -- a solid is inside-out, or preview is not showing the part"; fail=1
       else
         echo "  ok  $b  ${pct}%"
       fi
@@ -182,11 +188,21 @@ check: fmt-check lint guards warnings preview
       # OpenSCAD exits 0 — that is the exact bug class that broke this library
       # for 19 months (see docs/developer/verification.md). Never drop this flag.
       # The target MUST be .stl: with -o *.csg a failing assert() exits 0.
-      openscad --hardwarnings -o "{{OUT}}/check/$(basename "${f%.scad}").stl" "$f" 2>&1 \
+      stl="{{OUT}}/check/$(basename "${f%.scad}").stl"
+      rm -f "$stl"
+      openscad --hardwarnings -o "$stl" "$f" 2>&1 \
         | sed "s|^|    [$(basename "$f")] |" || { echo "CHECK FAIL: $f"; exit 1; }
+      # THE EXPORTED MESH MUST NOT BE INSIDE-OUT. A polyhedron() wound the wrong
+      # way round renders, previews and passes CGAL on 2021.01, which repairs the
+      # orientation in any boolean -- and exports with every normal reversed. On
+      # a Manifold-backend OpenSCAD difference() then subtracts nothing at all.
+      # An empty or non-numeric answer is a failure, not a pass: v+0 is 0.
+      vol=$(python3 tools/stl_volume.py "$stl") || { echo "CHECK FAIL: $f  (could not measure $stl)"; exit 1; }
+      awk -v v="$vol" 'BEGIN{exit !(v+0 > 0)}' \
+        || { echo "CHECK FAIL: $f  exported volume is $vol mm3, not positive -- the mesh is INSIDE-OUT"; exit 1; }
       n=$((n+1))
     done < <(find examples tests -maxdepth 1 -name '*.scad' 2>/dev/null | sort)
-    echo "check ok ($n file(s) rendered warning-free)"
+    echo "check ok ($n file(s) rendered warning-free, every exported mesh right way out)"
 
 # The assert-only subset. Fast: these files render nothing of consequence.
 test:
@@ -276,8 +292,9 @@ docs-images:
     set -euo pipefail
     out=docs/assets/img/examples
     mkdir -p "$out"
-    # Networks only render correctly on 2021.01 (issue #40), so say which
-    # version drew these.
+    # Use 2021.01, the tested version. A newer OpenSCAD keeps the faces a
+    # difference() creates green even after render(), so cut ends and
+    # cutaways come out two-tone. Say which version drew these.
     echo "  rendering with $(openscad --version 2>&1 | head -1)"
     if [ -n "${DISPLAY:-}" ]; then
       run_scad() { openscad "$@"; }
