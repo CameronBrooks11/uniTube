@@ -9,6 +9,11 @@ that still render. This is the answer this project settled on.
 Re-verified on 2021.01, because the received wisdom is contradictory and mostly
 wrong. Every gate in this repository is shaped by this table.
 
+> **Known issue ([#38](https://github.com/CameronBrooks11/uniTube/issues/38)).**
+> Everything here is measured on 2021.01, the version CI pins. On 2026.10.15
+> `tests/t_scoping.scad` fails and `just cgal` cannot pass, because that version
+> prints no `Simple: yes` line.
+
 | command | exit |
 |---|---|
 | `openscad -o x.stl` with a failing `assert` | **1** — `assert` *is* a test framework |
@@ -42,6 +47,8 @@ and neither is visible from a green build:
    significant figures, so volume bands can be tight. `just cgal`.
 5. **Preview correctness** — `just preview`. Renders each example through
    **OpenCSG**, not CGAL, and fails if a closed part shows back faces. See below.
+   Known issue ([#37](https://github.com/CameronBrooks11/uniTube/issues/37)):
+   an example is reported ok when the pixel checker prints nothing.
 6. **Declared engineering intent** — `checks/`, verified with
    [partspec](https://github.com/CameronBrooks11/partspec). A dev-time oracle;
    uniTube itself still links to nothing. `just partspec`.
@@ -106,6 +113,11 @@ cannot pass.
 **Validate every new check by deliberately reintroducing the bug it claims to
 catch.** A check that cannot fail is worth nothing. `tests/guards/` holds those
 reintroductions, and every one is watched to fail before it is trusted.
+
+The partspec contracts in `checks/` were validated the same way. Disabling the
+bore extension produced `61.02 mm3 of material intrudes into the keep-out region`
+while `watertight` and `solid_count` both still passed. Collapsing the lumen
+groups produced `solid_count — measured 1, limit equals=2`.
 
 That standard is why `just check` would have caught the regression that started
 this project, at commit time, in about eight lines of shell.

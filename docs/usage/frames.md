@@ -1,88 +1,133 @@
-# Frames
+# Frames and roll
 
-Frames are computed by uniTube, in exactly one function — `ut_stations(path,
-opts)`. Not by the frontend, which has no business deciding roll, and not by the
-backend, which has no business guessing it.
+A cross-section has to be oriented at every point along the path. The direction
+its local +X axis points is the **roll**. On a plain round tube roll is
+invisible. It matters as soon as anything is not rotationally symmetric: a split
+conduit's gap, a square bore, a keyway, or the clocking of whatever gets bolted
+to a port.
 
-| policy | behaviour |
+Roll is decided in exactly one function, `ut_stations(path, opts)`. Frontends do
+not set it and the mesh backend does not guess it. You choose a policy.
+
+## Choosing a policy
+
+| option | behaviour |
 |---|---|
-| `frame="transport"` *(default)* | rotation-minimizing; the seam does not spiral relative to the tube |
-| `frame="fixed"`, `normal=UP` | the reference is projected orthogonal to the tangent at EVERY station, so the seam points in a fixed WORLD direction |
-| `frame=<list>` | one normal per station, projected and asserted non-degenerate |
-| `twist=<deg>` | distributed by arclength on top of any of the above |
-| `closed=true` | holonomy measured, `symmetry` absorbed, remainder distributed |
+| `frame = "transport"` *(default)* | rotation-minimizing: the section does not spiral relative to the tube |
+| `frame = "fixed"`, `normal = [0,0,1]` | the reference is projected orthogonal to the tangent at every station, so the section's +X points in one world direction along the whole run |
+| `frame = <list>` | one normal per station, supplied by you |
+| `twist = <deg>` | extra roll, distributed by arclength on top of any of the above |
+
+Every frontend takes `frame`, `normal` and `twist` as arguments:
+
+```scad
+path = ut_polyline(pts, r = 18, frame = "fixed", normal = [0, 0, 1]);
+```
+
+They can also be given, or overridden, where the path is swept. Options given
+here win over the ones stored in the path:
+
+```scad
+ut_tube(path, prof, opts = [["frame", "fixed"], ["normal", [0, 0, 1]]]);
+ut_run("a", path, prof, opts = [["twist", 90]]);
+```
+
+> **Known issue ([#35]).** An unrecognised `frame` string, or a misspelled option
+> key, is not refused: the run is swept with the transport frame and no warning.
+> Check the spelling.
 
 ## Transport
 
-Per segment kind:
+The frame is carried along the path without adding twist:
 
-- **L** — the normal is unchanged. Exact.
-- **A** — rotate the normal about `cross(u,v)`, the arc's OWN axis, by the arc's
-  OWN sweep angle. **Closed form, exact, one line of Rodrigues.** This is the
-  payoff of an arc-native IR, and it is
-  `reference/axford/half_curvedPipe.scad:19` generalised (`docs/developer/history.md` §2).
-- **P** — discrete rotation-minimizing frame between consecutive samples.
+- **Lines** leave the normal unchanged.
+- **Arcs** rotate the normal about the arc's own axis by the arc's own sweep
+  angle. This is closed form and exact.
+- **Sampled segments** use a discrete rotation-minimizing step between
+  consecutive samples.
 
-Between segments the transport is the identity, because `SPINE-3` guarantees the
-tangents already match.
+On a **planar** bend the normal is parallel to the bend axis, and a rotation
+leaves a vector parallel to its axis unchanged. So a planar bend produces
+exactly zero twist; `tests/t_path.scad` asserts it to 1e-12.
 
-A consequence worth knowing: on a **planar** bend the roll reference is parallel
-to the bend axis, and Rodrigues leaves a vector parallel to its axis invariant.
-So a planar bend produces **exactly zero twist** — asserted to 1e-12 in
-`tests/t_path.scad`, not approximated.
+The starting normal is `normal` (default `[0,0,1]`) projected orthogonal to the
+first tangent. When the run starts parallel to it, the seed falls back to
+`[0,1,0]`, then to `[1,0,0]`.
 
-## Fixed, and why it is the right default for a printed part
+## Fixed
 
-For a lengthwise-split conduit, `frame="fixed"` is **stronger** than transport,
-not merely equivalent. Transport guarantees only that the seam does not spiral
-*relative to the tube*. A printed part has a *gravity-relative* requirement: the
-gap must face up along the whole run so it prints as an open channel without
-bridging. That is `frame="fixed", normal=UP`, and it is one argument.
+Use `frame = "fixed"` when the requirement is relative to the world rather than
+to the tube. The usual case is a lengthwise-split conduit that must print as an
+open channel: the gap has to face up along the whole run, and transport only
+promises that it does not spiral relative to the tube.
 
-## The degeneracy that kills naive implementations
+```scad
+ut_tube(path, ut_round(od = 16, wall = 2, split = [-30, 30]),
+        opts = [["frame", "fixed"], ["normal", [0, 0, 1]]]);
+```
 
-Seeding projects a world reference orthogonal to the tangent. When the run starts
-**parallel** to that reference — a vertical run against `UP` — the projection is
-zero and normalising it gives `[nan,nan,nan]` for every station on that leg.
+**The run must never point along `normal`.** A vertical pipe has no
+upward-facing side, so the ask is undefined there. `ut_stations()` asserts when
+any station's tangent comes within 0.5° of the normal, naming the station. The
+projection itself is smooth right up to that point (measured to 1e-13 at 1°
+from the axis), so there is no gradual loss of accuracy to allow for.
 
-`ut_ref_fallback()` falls back from `UP` to `BACK`, and from `BACK` to `+X`, when
-`|cross(t, ref)| < 1e-6`. Three lines.
+## A normal per station
 
-### The fallback is a SEED, and using it per-station made it a discontinuity
+`frame` may be a list with one normal per station. Each is projected orthogonal
+to its station's tangent, and a normal within 0.5° of the tangent is refused.
 
-That fallback is correct for what it was written for: choosing a starting
-reference **once**, at station 0, for a transport frame. Used once there is no
-discontinuity to create.
+The station count depends on `$fa`/`$fs`, so read it rather than assuming it:
 
-`frame="fixed"` derived every station's normal independently, so the fallback
-became a **hard switch in the middle of a run**. Measured on the old
-`examples/05`: as the conduit turned to vertical the seam jumped **174° in a
-single 6° step**. The mesh stayed manifold, CGAL reported `Simple: yes`, `just
-check`, `just cgal` and all 19 partspec assertions passed, and the C-section was
-simply wrong from that station on.
+```scad
+n = len(ut_stations(path));
+ut_tube(path, prof, opts = [["frame", [for (i = [0 : n - 1]) [0, 0, 1]]]]);
+```
 
-The projection is smooth to 1e-13 at every approach angle **down to 1° from the
-axis** and only breaks *at* it — a cliff, not gradual ill-conditioning. So
-`ut_stations()` now refuses the genuinely undefined ask rather than substituting
-a different reference for it: a vertical pipe has no upward-facing side.
+> **Known issue ([#35]).** A list longer than the station count is accepted and
+> the extra entries are ignored.
 
-### Three tests asserted the wrong property
+## Twist
 
-`tests/t_frame.scad` and `tests/t_split.scad` both ended on a vertical leg *on
-purpose*, and both asserted that the result was **not NaN**. It is not NaN — the
-fallback guarantees that. Finiteness was never the requirement; **continuity**
-is, and nothing checked it. `STATION-6` was documented from Phase 1 and enforced
-by nothing.
+`twist` adds a roll that grows linearly with arclength, from 0 at the start to
+the full value at the end. It is applied after the policy above.
 
-The third was worse. A caller-supplied `frame=<list>` parallel to the tangent
-*does* produce `[nan,nan,nan]`, and the assert written to catch it —
-`max([for (s = sts) abs(t * n)]) < 1e-9` — **passed**, reporting `2.22e-16`,
-because OpenSCAD's `max()` silently drops `nan` entries. Never test a frame for
-validity with `max()` alone; count the bad stations instead.
+> **Known issue ([#33]).** A straight leg has only two stations, so the twist
+> across it is a single strip between two rotated rings and the tube necks in
+> the middle. A 60 mm straight with `twist = 90` keeps 64.9% of its volume.
+> Until this is fixed, twist is only sound across bends and sampled paths.
 
-All three are now refused at the cause, and each refusal has a guard in
-`tests/guards/` that is watched to fire.
+## Closed paths
 
-Every angle in the frame path is computed as `atan2(norm(cross(a,b)), a*b)`.
-**Never `acos`** — `acos(1.0000001)` is `nan` on 2021.01, and near-collinear
+On a closed path (`ut_spine(segs, closed = true)`) the frame is transported all
+the way round and compared with where it started. The mismatch, the loop's
+holonomy, is distributed by arclength so the section meets itself. Measured on a
+four-arc torus: residual 0°.
+
+The option `["symmetry", k]` tells the compiler the section looks the same every
+`360/k` degrees, so only the remainder past the nearest such multiple is
+distributed.
+
+> **Known issue ([#34]).** `symmetry` is read from the options only; a profile's
+> own symmetry is not passed in. And `twist` on a closed path is not required to
+> close: `twist = 45` leaves a 44.25° step at the seam.
+
+## What is asserted
+
+`STATION-6`: between consecutive stations, the roll may not turn more than 45°
+further than the tangent does. Transport measures 0 by construction and a fixed
+frame measures 1e-13, while a flipped frame measures 84° to 174°, so the
+threshold sits in an empty gap. The check runs before `twist` is applied, so
+asking for a large twist does not trip it.
+
+The full list of station invariants is in
+[`reference/ir.md`](../reference/ir.md). How the fixed-frame and frame-list
+refusals came to exist is in [`developer/history.md`](../developer/history.md) §6.
+
+Every angle in the frame code is computed as `atan2(norm(cross(a,b)), a*b)`,
+never `acos`: `acos(1.0000001)` is `nan` on OpenSCAD 2021.01, and near-collinear
 waypoints are the most common input there is.
+
+[#33]: https://github.com/CameronBrooks11/uniTube/issues/33
+[#34]: https://github.com/CameronBrooks11/uniTube/issues/34
+[#35]: https://github.com/CameronBrooks11/uniTube/issues/35

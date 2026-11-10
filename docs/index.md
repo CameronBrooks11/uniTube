@@ -23,7 +23,7 @@ it. This directory is the reference.
 | | |
 |---|---|
 | [`developer/verification.md`](developer/verification.md) | What "check" and "test" mean for CAD: OpenSCAD's real exit codes, the gate tiers, and why `Simple: yes` proves almost nothing. |
-| [`developer/history.md`](developer/history.md) | What the pre-2026 implementation got right, recorded as understanding rather than code. |
+| [`developer/history.md`](developer/history.md) | What the pre-2026 implementation got right, and the defects found since the rewrite. |
 
 Architecture decision records, in [`adr/`](adr/). Each says what was decided, why,
 and — where it matters — what was measured.

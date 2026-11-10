@@ -1,12 +1,55 @@
-# Junctions
+# Networks and junctions
 
-The problem in one line: `union()` two hollow tubes and branch B's **wall** seals
-branch A's **lumen** at the junction.
+`union()` two hollow tubes and one tube's **wall** seals the other's **bore** at
+the junction. A network is how several hollow runs meet with every bore left
+open.
 
-This is the thing no library does, the thing this project was started for, and
-the thing three previous attempts in this repository died on.
+```scad
+trunk  = ut_run("trunk",  ut_polyline([[-50,0,0], [50,0,0]]), ut_round(od = 20, wall = 2));
+branch = ut_run("branch", ut_polyline([[0,10,0],  [0,50,0]]), ut_round(od = 12, wall = 2));
 
-## The two-pass, scoped to a lumen group
+ut_assemble(ut_net([trunk, branch],
+                   [ut_joint([["trunk", ["s", 50]], ["branch", "a"]])]));
+```
+
+## Runs, joints, nets
+
+```scad
+ut_run(name, path, profile, group = 0, opts = [])
+ut_joint(incident, body = "ball", at = undef)
+ut_net(runs, joints = [])
+ut_assemble(net, opts = [])
+```
+
+A **run** is a named path with a profile. `opts` are frame options for that run
+([`frames.md`](frames.md)). A split profile cannot be a run.
+
+A **joint** lists the run ends that meet. Each entry is `[runName, end]`, where
+`end` is:
+
+| end | meaning |
+|---|---|
+| `"a"` | the start of the run |
+| `"b"` | the end of the run |
+| `["s", x]` | a point `x` mm along the run. The run passes through. |
+
+Joints are always declared. Nothing is inferred from two runs happening to
+touch, because coincidence cannot find a branch that ends inside a trunk.
+
+The joint's **node** is `at` if you give it. Otherwise it is the first mid-run
+landing's point on that run's centreline, or failing that the mean of the
+incident end positions.
+
+> **Known issue ([#35]).** An `end` that is none of the three forms is accepted
+> and treated as an unjoined `"b"`: the network validates, the end stays an open
+> port and its bore is not opened into the joint.
+
+> **Known issue ([#36]).** A solid rod as an unjoined run, and two runs with the
+> same name, both abort with a message that names the wrong cause.
+
+## How the bores stay open
+
+For each lumen group, every shell is unioned first and every bore is cut second:
 
 ```scad
 for (g = ut_groups(net))
@@ -16,163 +59,140 @@ for (g = ut_groups(net))
   }
 ```
 
-The subtraction happens **once per group, after all unions in that group**, so B's
-shell cannot seal A's lumen: B's shell is unioned before A's bore is cut, and A's
-bore always wins.
+Because the cut comes after all the unions, no run's wall can seal another's
+bore. A run's bore is the same path and frames as its shell, swept with the
+inner loop of the profile, so nothing is computed twice.
 
-This is the inherited TODO from the 2023 prototype (removed with `reference/jantecnl/`; see `docs/developer/history.md` §4 and the git history),
-promoted from a comment to an architectural invariant. It already ships in this
-repository, in the wrong file, as `reference/doommeister/Round_Ducting_V1.1.scad:168`
-(`middle_tee_n`) — working, on real geometry, hardcoded to straight radial branches.
+This is the only CSG in the library. Along a run, a tube is one swept
+polyhedron.
 
-CSG appears in **exactly one place** in this library, and that is it. Everything
-along a run is a single swept polyhedron.
+### Ends are extended into the joint
 
-## Three things make it actually work
+Each joint-incident `"a"` or `"b"` end is pushed along its own end tangent:
 
-### 1. The bore comes free
-
-Same spine, same stations, same frame, different region
-(`ut_bore_rgn`). No second implementation of the path arithmetic.
-
-This is precisely where the 2023 attempt died: it modelled the lumen as a
-*separate subtraction*, so `pipeCurveCutout` had to re-derive the bend geometry
-and called `torusSlice_only_inner_pipes()` — a module `git log -S` confirms was
-**never defined in any commit**. The second pass got about 60% written and
-stopped at the hard part, and the hard part only existed because the lumen was
-modelled in the wrong place.
-
-### 2. Per-joint overlap, and BOTH shell and bore are extended
-
-Joints are **declared**, never inferred from geometric coincidence. Coincidence
-cannot find a branch that terminates *inside* a trunk, and a synthesised joint
-has nowhere to hang an overlap depth.
-
-Each joint-incident run end is extended along its **exact end tangent**:
-
-| part | extension |
+| part | extended |
 |---|---|
-| shell | reaches the joint node |
-| bore | half a core-radius further, so it is safely inside the core sphere |
+| shell | to the node |
+| bore | half a core radius past the node |
 
-Extending only the bore is not enough. A branch whose end sits exactly on the
-trunk's outer surface then touches it **tangentially** — the shells share a
-circle and overlap in nothing. Measured: `Simple: yes, Volumes: 3`, two solids.
+So a branch can be drawn the way a tee is normally described, starting on the
+trunk's outer wall, and the assembler carries it to the trunk's centreline.
+Extending only the bore is not enough: a branch ending exactly on the trunk's
+surface would touch it along a circle and overlap in nothing.
 
-The extension is collinear with the end tangent, so it adds no curvature and
-cannot disturb the frame.
-
-### 3. Lumen groups
-
-Every run carries a group id, default 0. With one global difference over the
-whole assembly, a coaxial jacket's outer bore swallows the inner run entirely —
-measured, 7883.8 of 29958.5 mm³, **26% of the material**, silently deleted, with
-CGAL still reporting `Simple: yes`.
-
-`NET-5` refuses an assembly where two runs that can nest share a group, and names
-the fix.
-
-`NET-5` compares the two centrelines by **sampled path distance**, not by
-endpoints. It was an endpoint test until 2026-08-21, and that miss was total:
-sliding a liner 70 mm along a jacket so the two shared no endpoint lost **3733.3
-mm³ — exactly 100% of the liner** — with `ut_check_net` returning `true` and CGAL
-reporting `Simple: yes`.
-
-**Runs that share a joint are exempt, and that exemption is not optional.** Two
-runs meeting at a joint necessarily approach within a bore radius — that is what
-a joint *is*. Without the exemption the check rejects a perfectly ordinary tee
-whose trunk bore is large enough to contain its branch; verified by removing it
-and watching exactly that case fail. Sharing a joint is the declaration that the
-approach is deliberate.
-
-Two limits worth knowing:
-
-- It is a **sampled** test (k=24 per path). A crossing that happens entirely
-  between two samples is not seen. The case it exists for is a long overlap
-  rather than a point contact, so this is a reasonable trade rather than a
-  silent hole.
-- It only fires when the inner run **fits** inside the outer's bore. That is what
-  distinguishes *nesting* — which the subtraction pass deletes — from
-  *intersecting*, which is the point of a junction.
-
-## Joint bodies
+### Joint bodies
 
 | body | what it is |
 |---|---|
-| `"ball"` *(default, explicit)* | a sphere at the node of the largest incident outer reach, with a matching core sphere of the smallest incident bore inradius. Literally `middle_tee_n`'s approach: ugly, correct, shippable. |
-| `"none"` | the runs simply overlap. Allowed, never synthesised. |
+| `"ball"` *(default)* | a sphere at the node as large as the largest incident outer reach, with a core sphere cut from it as large as the smallest incident bore's inscribed circle |
+| `"none"` | no sphere. The runs simply overlap. |
 
-Both radii are **measured from the incident profiles**, never assumed from `od`,
-so an arbitrary hollow section works without a special case.
+Both radii are measured from the incident profiles, so an arbitrary section
+needs no special case.
 
-### Both spheres are faceted, and `NET-4` measures the wall between the facets
+## Lumen groups
 
-The outer ball's nearest **face** sits well inside its vertices, and the inner
-ball's vertices reach the full core radius. Comparing the two *radii* treats both
-as smooth spheres and overstates the wall by exactly the amount that matters.
+Every run carries a `group`, default 0, and the union-then-cut runs once per
+group. Runs that join must share a group. Runs that **nest** — a liner in a
+jacket, a tube-in-tube exchanger — must be in different groups, or the outer
+bore cuts the inner run away entirely:
 
-Measured on two `od=20 id=17` runs meeting at a joint, at `$fn=5`: the radii say
-a 3.1 mm wall, the facets say **−0.33 mm**, and there is a hole punched clean
-through the junction — rendering `Simple: yes, Volumes: 2` with every gate green.
+```scad
+jacket = ut_run("jacket", path, ut_round(od = 30, id = 26), group = 0);
+liner  = ut_run("liner",  path, ut_round(od = 12, id = 8),  group = 1);
+ut_assemble(ut_net([jacket, liner]));
+```
 
-`NET-4` now compares `ut_sphere_inradius(shell_r)` against `core_r`.
-`ut_sphere_inradius` is `r·cos(180/n)²` — a sphere loses the faceting factor
-twice, once per direction — verified **exact** against the emitted mesh for
-n ≥ 8 and conservative below it. Failing low is the safe direction for anything
-that must fit inside the result.
+Measured with both in one group: 7883.8 of 29958.5 mm³, 26% of the material,
+gone, with CGAL reporting a valid solid.
 
-The same mistake sized the core sphere itself: `ut_bore_inradius` used to return
-`min(norm(q))` over the bore's **vertices**, which `ut_ring()` places exactly on
-the nominal circle — so it returned `id/2` at every resolution while the real
-inscribed radius is `id/2·cos(180/n)`. It uses `ut_inradius()` now, which
-measures to the **edges**.
+## What is checked
 
-## What v1 explicitly does not do
+`ut_assemble` runs `ut_check_net(net)` first. All of it is arithmetic on the
+paths and profiles; nothing is rendered.
 
-Stated loudly rather than discovered:
-
-- **No fillets. Junctions are correct and CREASED.** A sharp interior corner is a
-  stress riser and prints with a visible crease, and that is what ships. The
-  manifold renders correctly today; a fillet that self-intersects when three
-  branches crowd is worse than no fillet.
-- **No branch onto a bend.** Every known filleted-join implementation requires the
-  base to be a plane, sphere, straight cylinder or straight prism. For a library
-  whose premise is curved paths this is the binding constraint.
-- **Thin walls at a shallow crotch are not fixed.** Generous ball sizing and a
-  `NET-4` warning are all v1 offers. `NET-4` does now measure the ball's wall
-  between facets rather than between radii, so it is resolution-aware.
-- **Mid-run landings** (`["s", x]`) work with `"ball"` and `"none"` only.
-
-## Cost
-
-The 4-into-1 manifold renders in about 8 s. A single run is 0.4–60 ms, because it
-involves no boolean at all — the cost is entirely CGAL's, at the junctions.
-
-`ut_assemble()` wraps its CSG in `render()`, so preview pays that cost too. For
-a model too heavy to evaluate live, pass `opts = [["preview", "fast"]]` — and do
-not trust what that preview shows (`docs/developer/verification.md`).
-
-## Why `Simple: yes` is not the acceptance criterion
-
-Every silent failure this design was reviewed against reported `Simple: yes`:
-
-| failure | what CGAL said |
+| check | refuses |
 |---|---|
-| branch lumen sealed by a 0.95 mm plug | `Simple: yes, Volumes: 2` |
-| coaxial inner tube deleted, 26% of material gone | `Simple: yes` |
-| od=12 swept through an r=4 bend, self-intersecting | `Simple: yes, Volumes: 2` |
-| junction rendering as two pieces joined by slivers | `Simple: yes` |
+| `NET-0` | any run that fails the single-run checks (a bend radius not greater than the profile's reach) |
+| `NET-1` | a run end incident to more than one joint |
+| `NET-2` | a joint with an incident run that has no bore |
+| `NET-3` | a run end farther from the node than its own reach plus the ball's radius |
+| `NET-4` | a ball with no wall. Warns when the wall is under 1.2 mm. |
+| `NET-5` | two runs in one group where one fits inside the other's bore and their centrelines come within that bore |
+| `NET-6` | a joint whose runs are in different groups |
 
-So the gate is tiered (`docs/developer/verification.md`), and the two that matter here are:
+Notes on two of them:
 
-- **`ut_check_net`** — `NET-0..6`, analytic, on the IR as pure data, no rendering.
-- **`checks/`** — declared engineering intent, verified with
-  [partspec](https://github.com/CameronBrooks11/partspec). `keep_out` regions down
-  each lumen assert patency directly, with a mandatory anti-vacuity shell so a
-  *deleted* part fails rather than passes.
+- **`NET-4` depends on resolution.** Both spheres are faceted, and the wall is
+  measured from the outer ball's nearest face to the core's vertices. Two
+  `od=20 id=17` runs at `$fn=5` have a 3.1 mm wall by radius and −0.33 mm by
+  facet, which is a hole. Raise `$fn` or thicken the wall.
+- **`NET-5` is sampled**, 24 points per path, so a crossing that falls entirely
+  between samples is not seen. Runs that share a joint are exempt: meeting at a
+  joint necessarily brings them within a bore radius.
 
-Both were validated by deliberately reintroducing the bugs. Disabling the bore
-extension produced `61.02 mm3 of material intrudes into the keep-out region`
-while `watertight` and `solid_count` both still passed. Collapsing the lumen
-groups produced `solid_count — measured 1, limit equals=2`. A check that cannot
-fail is worth nothing, and these can.
+## Ports
+
+An open end is one that no joint claims. Ports are derived, not declared:
+
+```scad
+ports = ut_ports(net);                 // every open end
+p     = ut_port_named(net, "branch.b");
+
+ut_at_port(p) my_fitting();            // +Z outward, +X along the roll reference
+ut_port_marker(p);                     // debug arrows
+```
+
+A port is a full frame, not a position and a diameter:
+
+| accessor | |
+|---|---|
+| `ut_port_name(p)` | `"run.a"` or `"run.b"` |
+| `ut_port_pos(p)` | the end point |
+| `ut_port_dir(p)` | unit vector pointing outward, away from the material |
+| `ut_port_normal(p)` | the roll reference there, so a hex flat or lug lands repeatably |
+| `ut_port_profile(p)` | the run's profile |
+| `ut_port_s(p)` | arclength at that end |
+
+For a single run outside a network, use `ut_run_ports(path, prof, name)`.
+
+uniTube ships no threads, barbs or sockets. Terminations are a separate library
+that reads this record (ADR 0005, [#19]).
+
+> **Known issue ([#34]).** A closed run reports an `a` and a `b` port although it
+> has no ends.
+
+## What this version does not do
+
+- **No fillets.** Junctions are correct and creased. A sharp interior corner is
+  a stress riser and shows when printed ([#21]).
+- **No branch onto a bend.** Every known filleted-join method needs the base to
+  be a plane, a sphere, or a straight cylinder or prism.
+- **Thin walls at a shallow crotch are not repaired.** A generous ball and the
+  `NET-4` warning are what there is.
+- **Mid-run landings** work with `"ball"` and `"none"` only.
+
+## Cost, and previewing
+
+A single run involves no boolean and takes 0.4–60 ms. The junctions cost a CGAL
+evaluation: the 4-into-1 manifold renders in about 8 s.
+
+`ut_assemble()` wraps its CSG in `render()`, so preview pays that cost too
+(1.9 s for the coaxial jacket). That is deliberate: OpenSCAD's fast preview can
+draw a hollow assembly as a solid slug. For a model too heavy to evaluate live,
+pass `opts = [["preview", "fast"]]`, and do not trust what that preview shows.
+The measurements are in
+[`developer/verification.md`](../developer/verification.md).
+
+## Checking a finished part
+
+A valid, manifold solid can still have a sealed bore. To assert that a bore is
+open, put a keep-out region down it; `checks/` does this for three examples
+with [partspec](https://github.com/CameronBrooks11/partspec). See
+[`developer/verification.md`](../developer/verification.md).
+
+[#19]: https://github.com/CameronBrooks11/uniTube/issues/19
+[#21]: https://github.com/CameronBrooks11/uniTube/issues/21
+[#34]: https://github.com/CameronBrooks11/uniTube/issues/34
+[#35]: https://github.com/CameronBrooks11/uniTube/issues/35
+[#36]: https://github.com/CameronBrooks11/uniTube/issues/36
