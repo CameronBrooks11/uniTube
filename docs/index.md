@@ -7,15 +7,23 @@ it. This directory is the reference.
 
 | | |
 |---|---|
+| [`getting-started.md`](getting-started.md) | Install, a first tube, looking inside, and what an error looks like. |
 | [`usage/paths.md`](usage/paths.md) | The four ways to describe a path, how to choose one, and the measured cost of a sampled path. |
 | [`usage/profiles.md`](usage/profiles.md) | The cross-section, the lumen, split C-sections, and the correspondence rule that keeps end caps from self-intersecting. |
 | [`usage/frames.md`](usage/frames.md) | Roll: transport versus fixed, twist, and the vertical-tangent degeneracy. |
 | [`usage/networks.md`](usage/networks.md) | How several hollow runs meet without sealing each other's bores: the two-pass, lumen groups, joint bodies, and the limits stated out loud. |
+| [`examples/`](examples/index.md) | The twelve runnable models and what each one shows. |
 
 ## Reference
 
 | | |
 |---|---|
+| [`reference/path.md`](reference/path.md) | Paths, segments and stations. |
+| [`reference/profile.md`](reference/profile.md) | Profiles and regions. |
+| [`reference/sweep.md`](reference/sweep.md) | `ut_tube`, `ut_sweep` and the mesh functions. |
+| [`reference/network.md`](reference/network.md) | Runs, joints, nets and ports. |
+| [`reference/checks.md`](reference/checks.md) | Every error and warning code, and what to do about it. |
+| [`reference/utilities.md`](reference/utilities.md) | Constants, vector maths and `ut_cutaway`. |
 | [`reference/ir.md`](reference/ir.md) | The two-level path IR — the exact `L`/`A`/`P` spine, the stations it compiles to, the `SPINE` and `STATION` invariants, and a worked elbow you can verify by hand. |
 
 ## Design and development
