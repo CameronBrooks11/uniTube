@@ -184,10 +184,9 @@ A single run involves no boolean and takes 0.4–60 ms. The junctions cost a CGA
 evaluation: the 4-into-1 manifold renders in about 8 s.
 
 `ut_assemble()` wraps its CSG in `render()`, so preview pays that cost too
-(1.9 s for the coaxial jacket). That is deliberate: OpenSCAD's fast preview can
-draw a hollow assembly as a solid slug. For a model too heavy to evaluate live,
-pass `opts = [["preview", "fast"]]`, and do not trust what that preview shows.
-The measurements are in
+(1.9 s for the coaxial jacket). For a model too heavy to evaluate live, pass
+`opts = [["preview", "fast"]]` to skip it. The fast preview of the coaxial
+jacket measures the same as the wrapped one; see
 [`developer/verification.md`](../developer/verification.md).
 
 ## Checking a finished part

@@ -66,40 +66,47 @@ and neither is visible from a green build:
 order, floating point, and any `$fa`/`$fs` change, and they train people to
 ignore the suite.
 
-## Preview is not geometry, and it can lie on its own
+## Preview draws the mesh as given, including inside-out
 
-> **Known issue ([#40](https://github.com/CameronBrooks11/uniTube/issues/40)).** The STL figures in this section
-> are exactly what a normal `-o x.stl` export of `examples/08` produces on
-> OpenSCAD 2026.10.15, where inside-out face winding stops `difference()` from
-> subtracting. The diagnosis below has not been re-examined against that.
+Every tier above except `just preview` evaluates geometry with CGAL, and CGAL
+repairs an inside-out polyhedron in any boolean without a word. **F5 preview does
+not.** OpenCSG draws the operands of a `difference()` as they were handed to it.
 
-Every tier above except `just preview` evaluates geometry with CGAL. **F5 preview
-does not.** OpenCSG renders `difference()` by depth-peeling the framebuffer, and
-when a model's depth complexity exceeds what it peels, it paints the *subtracted*
-solid's back faces over the shell.
+So preview was the one place the winding defect showed
+([`history.md`](history.md) §9), and it showed as an assembly that looked solid.
+Measured on `examples/08_coaxial_jacket`, previewed without `ut_assemble()`'s
+`render()` wrapper, as the percentage of model pixels that are back faces:
 
-This is not cosmetic. Measured on `examples/08_coaxial_jacket` before
-`ut_assemble()` wrapped its CSG in `render()`:
+| swept faces | 2021.01 | 2026.10.15 |
+|---|---|---|
+| inside-out, as emitted before the fix | **79.3%** | **79.3%** |
+| wound the way `polyhedron()` expects | 0.0% | 0.0% |
 
-| | |
-|---|---|
-| model pixels that were the subtracted bore's back faces | **79.3%** |
-| what it looked like | a solid green slug — no bore, no liner, no annulus |
-| STL exported from that state | 9688 triangles, 4291 of them duplicates, **3429 non-manifold edges**, signed volume **−174446** — larger than the bounding box, and negative |
-| what every CGAL gate said | `Simple: yes`, `Volumes: 3`, 19/19 partspec assertions passing |
+At 79.3% the part is a solid green slug: no bore, no liner, no annulus. Every
+CGAL gate said `Simple: yes`, `Volumes: 3`, with 19/19 partspec assertions
+passing.
 
-The exported mesh still contained the **fan-cap centre vertices at `r=0`**, which
-a real `difference()` removes. That is the fingerprint: preview geometry is the
-un-subtracted operands, so an export taken from preview is not the part.
+**This page used to give a different cause.** It said OpenCSG ran out of depth
+layers on a hollow assembly and painted the subtracted solid over the shell, and
+that wrapping the CSG in `render()` cured it by evaluating the booleans for real.
+The control above settles it: the same OpenCSG and the same model go from 79.3%
+to 0.0% when only the winding changes. `render()` helped because it runs CGAL,
+which repairs the orientation. `polyhedron(convexity=)` made no difference at 10,
+20 or 40, which fits: convexity was never the problem.
 
-`polyhedron(convexity=)` does **not** fix it — verified identical at 10, 20 and
-40. `render()` does, by evaluating the CSG instead of faking it.
+The STL once recorded here as "exported from preview" — 9688 triangles, signed
+volume −174446, and at the time 3429 non-manifold edges — is what an ordinary
+`-o x.stl` export of that example produced on 2026.10.15 while the faces were
+inside-out.
+
+`ut_assemble()` still wraps its CSG in `render()`. With the winding right, the
+unwrapped preview is also correct, so the wrapper now costs a CGAL evaluation in
+preview and buys nothing measured.
 
 The gate needs no tuning, because the signal is binary. OpenSCAD's Cornfield
-scheme paints back faces green and front faces yellow, and **a closed part viewed
-from outside shows no back faces at all**: 79.3% before, 0.0% after. An example
-that exposes an interior on purpose — a cutaway — declares
-`preview-exposes-interior` in the file.
+scheme paints back faces green and front faces yellow, and **a part viewed from
+outside shows no back faces at all**. That holds for a cutaway too:
+`examples/12_section_view` measures 0.0%, where it measured 18.7% inside-out.
 
 ## `Simple: yes` is necessary and nowhere near sufficient
 
@@ -110,8 +117,8 @@ Every silent failure this design has been reviewed against passed it:
 - a tube swept through a bend tighter than its own radius, passing through
   itself — `Simple: yes, Volumes: 2` and a plausible positive volume,
 - a junction rendering as separate solids held together by a shared circle,
-- and an assembly that displayed as a solid slug in the mode the library is
-  actually used in, while exporting a mesh with 3429 non-manifold edges.
+- and every swept solid inside-out: a plain tube exporting −5865.23 mm³ for
+  +5865.23, and an assembly previewing as a solid slug.
 
 A self-intersecting run logs **both** `CGAL ERROR: assertion violation!` and
 `Simple: yes`, and `openscad` exits 0 — so `just cgal` greps for the error text

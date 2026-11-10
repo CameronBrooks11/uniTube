@@ -119,14 +119,15 @@ warnings:
     done
     exit $fail
 
-# PREVIEW must not lie. F5 is the mode this library is used in, and OpenCSG
-# renders difference() by depth-peeling the framebuffer rather than computing
-# geometry -- so a hollow assembly can display as a solid slug while every
-# CGAL-based gate is green. Nothing here looked at preview until 2026-08-21.
+# Preview draws the mesh AS GIVEN. F5 is the mode this library is used in, and
+# it is the one path that does not go through CGAL -- so it is the one place an
+# inside-out polyhedron shows, as a hollow assembly that displays as a solid slug
+# while every CGAL-based gate is green. Nothing here looked at preview until
+# 2026-08-21.
 #
-# The signal needs no tuning: a closed part viewed from outside shows NO back
-# faces. Measured on examples/08 before the fix: 79.3% back faces. After: 0.0%.
-# There is nothing in between to threshold against. See tools/preview_backfaces.py.
+# The signal needs no tuning: a part viewed from outside shows NO back faces.
+# Measured on examples/08 with the swept faces inside-out: 79.3%. Wound for
+# polyhedron(): 0.0%. See tools/preview_backfaces.py.
 preview:
     #!/usr/bin/env bash
     set -uo pipefail
@@ -159,11 +160,13 @@ preview:
       # NO --render: this is the OpenCSG preview path, deliberately.
       run_scad -o "$png" --imgsize=420,380 --viewall --autocenter "$f" >/dev/null 2>&1
       [ -s "$png" ] || { echo "  FAIL $b  (no preview image produced -- no GL?)"; fail=1; continue; }
-      # An example that deliberately exposes an interior declares it in the file.
-      if grep -q 'preview-exposes-interior' "$f"; then limit=100; else limit=2; fi
+      # No exemptions. A cutaway used to be allowed any amount, on the belief
+      # that it shows back faces by design; examples/12 measures 0.0% now that
+      # the faces are wound correctly, and 18.7% was the defect showing.
+      limit=2
       pct=$($py tools/preview_backfaces.py "$png")
       if awk -v p="$pct" -v l="$limit" 'BEGIN{exit !(p>l)}'; then
-        echo "  FAIL $b  ${pct}% of the model is BACK faces -- preview is showing the subtracted bore"; fail=1
+        echo "  FAIL $b  ${pct}% of the model is BACK faces -- a solid is inside-out, or preview is not showing the part"; fail=1
       else
         echo "  ok  $b  ${pct}%"
       fi
