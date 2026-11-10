@@ -1,3 +1,8 @@
+---
+title: Examples
+nav_order: 4
+---
+
 # Examples
 
 Each file under [`examples/`] is a complete model that renders on its own. Every

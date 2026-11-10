@@ -1,3 +1,9 @@
+---
+title: The path IR
+parent: Reference
+nav_order: 7
+---
+
 # The path IR
 
 Two levels, one compiler function between them, and a hard rule about who may

@@ -1,3 +1,10 @@
+---
+title: 0003 Licence and quarantine
+parent: Decisions
+grand_parent: Developer
+nav_order: 3
+---
+
 # ADR 0003 — uniTube is BSD-2-Clause; prior art is quarantined
 
 **Status:** accepted (2026-08-21) · **amended 2026-08-21 — see below**

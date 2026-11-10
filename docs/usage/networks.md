@@ -1,3 +1,9 @@
+---
+title: Networks and junctions
+parent: Usage
+nav_order: 4
+---
+
 # Networks and junctions
 
 `union()` two hollow tubes and one tube's **wall** seals the other's **bore** at

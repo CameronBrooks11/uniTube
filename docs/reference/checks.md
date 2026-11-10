@@ -1,3 +1,9 @@
+---
+title: Checks and errors
+parent: Reference
+nav_order: 5
+---
+
 # Checks, errors and warnings
 
 uniTube validates the description of a part before drawing it. The checks are

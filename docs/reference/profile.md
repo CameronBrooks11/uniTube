@@ -1,3 +1,9 @@
+---
+title: Profile API
+parent: Reference
+nav_order: 2
+---
+
 # Profiles — API
 
 Source: `src/ut_profile.scad`. For how to use these, see

@@ -1,3 +1,9 @@
+---
+title: Sweep API
+parent: Reference
+nav_order: 3
+---
+
 # Sweeping — API
 
 Source: `src/ut_mesh.scad`. A region swept along stations becomes one

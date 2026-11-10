@@ -1,3 +1,10 @@
+---
+title: 0005 Terminations are separate
+parent: Decisions
+grand_parent: Developer
+nav_order: 5
+---
+
 # ADR 0005 — Terminations live in a separate library; uniTube ships only a port record
 
 **Status:** accepted (2026-08-21)

@@ -1,3 +1,9 @@
+---
+title: Paths
+parent: Usage
+nav_order: 1
+---
+
 # Paths
 
 A path is the tube's centreline. There are four ways to describe one, and all of

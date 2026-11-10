@@ -1,3 +1,9 @@
+---
+title: Network and port API
+parent: Reference
+nav_order: 4
+---
+
 # Networks and ports — API
 
 Source: `src/ut_net.scad` and `src/ut_port.scad`. For how to use these, see

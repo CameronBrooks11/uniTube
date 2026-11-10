@@ -265,6 +265,14 @@ render:
       echo "  {{OUT}}/render/$(basename "${f%.scad}").stl"
     done
 
+# Build the documentation site into docs/_site. Needs Ruby and `bundle install` in docs/.
+docs-build:
+    cd docs && bundle exec jekyll build
+
+# Serve the documentation site at http://localhost:4000/uniTube/ and rebuild on change.
+docs:
+    cd docs && bundle exec jekyll serve --livereload
+
 # Remove all build output.
 clean:
     rm -rf "{{OUT}}"

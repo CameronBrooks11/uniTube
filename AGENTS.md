@@ -117,6 +117,11 @@ These cost real time in Phase 1. Each is a silent or misleading failure.
 - OpenSCAD **2021.01** is the version floor. No features newer than that.
 - `just check` is the CI equivalent. Run `just check && just test` before every
   commit.
+- `docs/` is also a Jekyll site (just-the-docs), built by
+  `.github/workflows/pages.yml`. Ruby is DEV-TIME tooling for the site only, like
+  partspec; hard rule 1 is about the library. Every page needs front matter or
+  Jekyll copies it unrendered, and pages link to each other as `other.md` so the
+  links also work on GitHub. `just docs-build` builds it; `just docs` serves it.
 - Tests are `assert`-only and must end in a `cube(0.001);` sentinel — a file
   emitting no geometry exits 1 under `-o *.stl`.
 - Always render tests to `.stl`, never `.csg`: **with `-o *.csg` a failing

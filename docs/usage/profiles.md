@@ -1,3 +1,9 @@
+---
+title: Profiles
+parent: Usage
+nav_order: 2
+---
+
 # Profiles
 
 A profile is the tube's cross-section: a **wall between two boundaries**. The

@@ -1,3 +1,9 @@
+---
+title: History
+parent: Developer
+nav_order: 2
+---
+
 # History
 
 The numbered sections first record what the pre-2026 implementation got right,

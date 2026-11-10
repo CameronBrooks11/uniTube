@@ -1,64 +1,49 @@
-# uniTube documentation
+---
+title: Home
+layout: home
+nav_order: 1
+---
 
-Start with [`../README.md`](../README.md) for what the library is and how to run
-it. This directory is the reference.
+# uniTube
 
-## Using the library
+The Universal Tube Library for OpenSCAD: describe a tube's centreline, give it a
+cross-section, and join several into branching networks whose bores stay open.
 
-| | |
-|---|---|
-| [`getting-started.md`](getting-started.md) | Install, a first tube, looking inside, and what an error looks like. |
-| [`usage/paths.md`](usage/paths.md) | The four ways to describe a path, how to choose one, and the measured cost of a sampled path. |
-| [`usage/profiles.md`](usage/profiles.md) | The cross-section, the lumen, split C-sections, and the correspondence rule that keeps end caps from self-intersecting. |
-| [`usage/frames.md`](usage/frames.md) | Roll: transport versus fixed, twist, and the vertical-tangent degeneracy. |
-| [`usage/networks.md`](usage/networks.md) | How several hollow runs meet without sealing each other's bores: the two-pass, lumen groups, joint bodies, and the limits stated out loud. |
-| [`examples/`](examples/index.md) | The twelve runnable models and what each one shows. |
+```scad
+use <uniTube/src/uniTube.scad>;
 
-## Reference
+// waypoints and fillet radii
+ut_tube(ut_polyline([[0,0,0], [50,0,0], [50,50,0]], r = 15),
+        ut_round(od = 12, wall = 2));
+```
 
-| | |
-|---|---|
-| [`reference/path.md`](reference/path.md) | Paths, segments and stations. |
-| [`reference/profile.md`](reference/profile.md) | Profiles and regions. |
-| [`reference/sweep.md`](reference/sweep.md) | `ut_tube`, `ut_sweep` and the mesh functions. |
-| [`reference/network.md`](reference/network.md) | Runs, joints, nets and ports. |
-| [`reference/checks.md`](reference/checks.md) | Every error and warning code, and what to do about it. |
-| [`reference/utilities.md`](reference/utilities.md) | Constants, vector maths and `ut_cutaway`. |
-| [`reference/ir.md`](reference/ir.md) | The two-level path IR — the exact `L`/`A`/`P` spine, the stations it compiles to, the `SPINE` and `STATION` invariants, and a worked elbow you can verify by hand. |
+It has no dependencies and needs OpenSCAD 2021.01.
 
-## Design and development
+## What it is for
 
-| | |
-|---|---|
-| [`developer/verification.md`](developer/verification.md) | What "check" and "test" mean for CAD: OpenSCAD's real exit codes, the gate tiers, and why `Simple: yes` proves almost nothing. |
-| [`developer/history.md`](developer/history.md) | What the pre-2026 implementation got right, and the defects found since the rewrite. |
+General sweep libraries move a solid outline along a curve. A tube needs more:
 
-Architecture decision records, in [`adr/`](adr/). Each says what was decided, why,
-and — where it matters — what was measured.
+- a **bore** that survives every union in the model,
+- **several ways to describe a path** — waypoints with fillet radii, a bender
+  program, a formula, or arcs and lines — that all behave the same downstream,
+- **branching networks** where hollow runs meet without sealing each other,
+- **ports** as data, so fittings can be a separate library.
+
+## Where to go
 
 | | |
 |---|---|
-| [0001](adr/0001-no-dependencies.md) | uniTube takes no dependencies |
-| [0002](adr/0002-two-level-ir.md) | The path IR has two levels — **including the falsification test it later passed** |
-| [0003](adr/0003-licence.md) | BSD-2-Clause; prior art quarantined |
-| [0004](adr/0004-no-mitres.md) | `r = 0` at an interior vertex is an error |
-| [0005](adr/0005-terminations-are-separate.md) | Terminations are a separate library; uniTube ships a port record |
-| [0006](adr/0006-profile-correspondence.md) | Profile loops must be correspondence-aligned |
-| [0007](adr/0007-open-annulus.md) | A C-section is an open annulus, not one closed loop |
+| [Getting started](getting-started.md) | Install, a first tube, looking inside. |
+| [Usage](usage/index.md) | Paths, profiles, frames, networks. |
+| [Examples](examples/index.md) | Twelve runnable models. |
+| [Reference](reference/index.md) | Every function, and every error code. |
+| [Developer](developer/index.md) | Verification, design decisions, history. |
 
-## What is next
+## Status
 
-Outstanding work, and work deliberately not being done, is tracked in
-[GitHub issues](https://github.com/CameronBrooks11/uniTube/issues) rather than in
-a file in the repository. Each deferred item carries the reasoning and the
-measurements that led to deferring it.
+`v0.1.0`. The geometry is verified, but the API has not yet been used by
+anything outside the repository, so names and argument shapes may still move.
 
-## A note on how to read these
-
-Where a document gives a number — a tolerance, an error, a volume — it was
-measured on OpenSCAD 2021.01, not estimated. Where a check exists, it was
-validated by deliberately reintroducing the bug it catches; `tests/guards/` holds
-those reintroductions, and every one is watched to fail before it is trusted.
-
-That is also the standard for changing anything here: a claim without a
-measurement behind it is the thing this library was rebuilt to remove.
+Not shipped, deliberately: terminations (a separate library), junction fillets,
+profile variation along a path, and multi-lumen sections. Open work is in
+[GitHub issues](https://github.com/CameronBrooks11/uniTube/issues).

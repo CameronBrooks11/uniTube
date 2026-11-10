@@ -1,3 +1,10 @@
+---
+title: 0002 Two-level path IR
+parent: Decisions
+grand_parent: Developer
+nav_order: 2
+---
+
 # ADR 0002 — The path IR has two levels
 
 **Status:** accepted (2026-08-21) · **falsification test PASSED in Phase 4 — see below**

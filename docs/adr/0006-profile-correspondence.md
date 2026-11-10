@@ -1,3 +1,10 @@
+---
+title: 0006 Profile correspondence
+parent: Decisions
+grand_parent: Developer
+nav_order: 6
+---
+
 # ADR 0006 — Profile loops must be correspondence-aligned, not merely equal in count
 
 **Status:** accepted (2026-08-21) · discovered while prototyping ADR 0001

@@ -1,3 +1,10 @@
+---
+title: 0007 Open annulus
+parent: Decisions
+grand_parent: Developer
+nav_order: 7
+---
+
 # ADR 0007 — A C-section is an OPEN ANNULUS, not a single closed loop
 
 **Status:** accepted (2026-08-21) · Phase 2

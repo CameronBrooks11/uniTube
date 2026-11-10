@@ -1,3 +1,9 @@
+---
+title: Utilities
+parent: Reference
+nav_order: 6
+---
+
 # Utilities — API
 
 Source: `src/ut_core.scad`, `src/ut_math.scad`, `src/ut_view.scad`.

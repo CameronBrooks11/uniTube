@@ -1,3 +1,9 @@
+---
+title: Verification
+parent: Developer
+nav_order: 1
+---
+
 # What "check" and "test" mean for CAD
 
 A geometry library has no natural notion of a passing test. There is no return

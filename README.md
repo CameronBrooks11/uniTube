@@ -70,7 +70,7 @@ src/         the library. No file here emits geometry on import.
 examples/    runnable demos, one per capability
 tests/       assert-only; `just test`
 reference/   read-only quarantine of prior art. src/ never imports from here.
-docs/        the IR, frames, profiles, junctions, and ADRs
+docs/        the documentation site: usage, reference, design decisions
 ```
 
 ## Development

@@ -1,3 +1,9 @@
+---
+title: Path API
+parent: Reference
+nav_order: 1
+---
+
 # Paths — API
 
 Source: `src/ut_path.scad` and `src/frontend/`. For how to choose and use these,

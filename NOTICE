@@ -6,6 +6,13 @@ everything under src/, examples/, tests/, tools/, checks/, docs/ and spikes/,
 plus the build files at the root. It has NO third-party dependencies and links
 to nothing, so USING uniTube carries no obligation beyond BSD-2-Clause.
 
+The documentation site's configuration is the one exception under docs/. The
+files docs/_config.yml, docs/Gemfile, docs/_plugins/ and docs/_sass/ derive from
+just-the-docs-template (Copyright (c) 2022 just-the-docs) by way of
+just-the-docs-template-openscad (Copyright (c) 2025 Cameron K Brooks), both MIT.
+The licence text is in docs/SITE-LICENSE.txt. They build the website and are no
+part of the library.
+
 The only third-party code in this repository is under reference/, which no part
 of uniTube imports, links to, or is derived from. It is present as prior art and
 is MERELY AGGREGATED here in the sense of GPLv3 section 5 -- separate works, on a
