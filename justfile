@@ -268,7 +268,9 @@ render:
 # The images are COMMITTED, so the pages show them on GitHub as well as on the
 # site. Re-run this after changing an example. It renders through OpenCSG, like
 # `just preview`, so it needs a GL context and cannot run headless without xvfb.
-[doc("Render each example to a PNG under docs/assets/img/examples/ for the documentation site.")]
+# (No [doc()] attribute here: the just that Ubuntu 24.04 packages, and so CI,
+# does not know it. `just --list` shows the last comment line instead.)
+# Render each example to a PNG under docs/assets/img/examples/ for the documentation site.
 docs-images:
     #!/usr/bin/env bash
     set -euo pipefail
